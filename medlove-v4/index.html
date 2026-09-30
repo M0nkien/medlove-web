@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15130f">
+  <title>Medlove • Včelia farma Slnečná</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="top-note" id="topNote">
+    <div class="shell top-note-inner">
+      <span id="announcementText">🚚 Pri odbere od 3 ks dovoz do Ružomberka a blízkeho okolia zdarma.</span>
+      <button id="closeAnnouncement" aria-label="Zavrieť">×</button>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="shell nav">
+      <a class="brand" href="#top">
+        <span class="logo-mark">🐝</span>
+        <span class="brand-copy">
+          <strong id="brandName">Medlove</strong>
+          <small id="brandSubtitle">Včelia farma Slnečná</small>
+        </span>
+      </a>
+
+      <button class="mobile-menu" id="mobileMenu">☰</button>
+
+      <nav id="mainNav">
+        <a href="#produkty">Med</a>
+        <a href="#farma">Naša farma</a>
+        <a href="#preco">Prečo Medlove</a>
+        <a href="#kontakt">Kontakt</a>
+      </nav>
+
+      <button class="cart-btn" id="openCart">
+        Košík <span id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <div class="micro-label">Rodinná včelia farma z Likavky</div>
+          <h1 id="heroTitle">Poctivý med priamo od včelára.</h1>
+          <p id="heroText">Čerstvý slovenský med z rodinnej včelej farmy s dôrazom na prírodu, kvalitu a poctivosť.</p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#produkty">Vybrať med</a>
+            <a class="btn btn-secondary" href="tel:+421908356858">Zavolať</a>
+          </div>
+
+          <div class="hero-badges">
+            <div><b>100 %</b><span>slovenský včelí produkt</span></div>
+            <div><b>Likavka</b><span>lokálny pôvod</span></div>
+            <div><b>950 g</b><span>poctivé balenie</span></div>
+          </div>
+        </div>
+
+        <div class="hero-art">
+          <div class="sun-glow"></div>
+          <div class="flower flower-a">🌸</div>
+          <div class="flower flower-b">🌼</div>
+          <div class="flower flower-c">🌿</div>
+          <div class="bee bee-a">🐝</div>
+          <div class="bee bee-b">🐝</div>
+          <div class="jar jar-back jar-dark">
+            <div class="lid"></div>
+            <div class="glass">
+              <div class="jar-label">
+                <span>MED</span>
+                <small>medovicový</small>
+              </div>
+            </div>
+          </div>
+          <div class="jar jar-front">
+            <div class="lid"></div>
+            <div class="glass">
+              <div class="jar-label">
+                <span>MED</span>
+                <small>z Likavky</small>
+              </div>
+            </div>
+          </div>
+          <div class="hero-stamp">
+            <span>POCTIVÝ MED</span>
+            <b>PRIAMO OD</b>
+            <span>VČELÁRA</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip">
+      <div class="shell trust-grid">
+        <div><span>🇸🇰</span><p><b>Slovenský produkt</b><small>Lokálny med z Likavky</small></p></div>
+        <div><span>🐝</span><p><b>Starostlivosť o včely</b><small>S dôrazom na prirodzený chov</small></p></div>
+        <div><span>🍯</span><p><b>Čerstvý med</b><small>Priamo od včelára</small></p></div>
+        <div><span>🚚</span><p><b>Dovoz od 3 ks zdarma</b><small>RK a blízke okolie</small></p></div>
+      </div>
+    </section>
+
+    <section class="section shell" id="produkty">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Naša ponuka</span>
+          <h2>Kvalitný med z Likavky</h2>
+          <p>Vyber si z našich najobľúbenejších druhov medu.</p>
+        </div>
+        <div class="shop-tools">
+          <div class="search">
+            <span>⌕</span>
+            <input id="productSearch" placeholder="Hľadať med...">
+          </div>
+          <select id="sortSelect">
+            <option value="default">Odporúčané</option>
+            <option value="price-asc">Najnižšia cena</option>
+            <option value="price-desc">Najvyššia cena</option>
+            <option value="name">Názov A–Z</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="product-grid" id="productGrid"></div>
+      <div class="empty-state hidden" id="emptyState">
+        <span>🍯</span>
+        <h3>Nič sme nenašli</h3>
+        <p>Skús iný názov produktu.</p>
+      </div>
+    </section>
+
+    <section class="farma-section" id="farma">
+      <div class="shell farma-grid">
+        <div class="farm-visual">
+          <div class="farm-logo-card">
+            <div class="farm-bee">🐝</div>
+            <strong>Medlove</strong>
+            <span>Včelia farma Slnečná</span>
+            <em>Poctivý med z Likavky</em>
+          </div>
+        </div>
+
+        <div class="farm-copy">
+          <span class="eyebrow">Rodinná včelia farma</span>
+          <h2 id="aboutTitle">Príroda. Kvalita. Poctivosť.</h2>
+          <p id="aboutText">Medlove je rodinná včelia farma z Likavky. Našou prioritou je poctivá starostlivosť o včely, lokálny pôvod a kvalitný med, ktorý putuje priamo od včelára k zákazníkovi.</p>
+
+          <div class="farm-points">
+            <div><span>01</span><p><b>Lokálny pôvod</b><small>Med pochádza z prostredia Likavky a okolia.</small></p></div>
+            <div><span>02</span><p><b>Poctivá výroba</b><small>Každý pohár pripravujeme s dôrazom na kvalitu.</small></p></div>
+            <div><span>03</span><p><b>Osobný prístup</b><small>Objednávaš priamo od včelára.</small></p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell" id="preco">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Prečo Medlove</span>
+          <h2>Med, pri ktorom vieš, odkiaľ pochádza.</h2>
+        </div>
+      </div>
+
+      <div class="benefit-grid">
+        <article>
+          <span>🌼</span>
+          <h3>Prírodný pôvod</h3>
+          <p>Med pochádza z poctivej včelárskej práce a miestnej prírody.</p>
+        </article>
+        <article>
+          <span>🫙</span>
+          <h3>950 g balenie</h3>
+          <p>Poctivý pohár medu vhodný domov aj ako darček.</p>
+        </article>
+        <article>
+          <span>📍</span>
+          <h3>Likavka</h3>
+          <p>Lokálny výrobca a osobný odber priamo v Likavke.</p>
+        </article>
+        <article>
+          <span>💛</span>
+          <h3>Rodinný prístup</h3>
+          <p>Žiadny anonymný obchod. Za produktom stojí konkrétny včelár.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="delivery-section">
+      <div class="shell delivery-card">
+        <div>
+          <span class="eyebrow light">Lokálny dovoz</span>
+          <h2>Pri odbere od 3 kusov dovezieme med zdarma.</h2>
+          <p id="deliveryText">Platí pre Ružomberok a blízke okolie. Pri inom mieste sa s nami dohodni telefonicky.</p>
+        </div>
+        <a class="btn btn-light" href="tel:+421908356858">0908 356 858</a>
+      </div>
+    </section>
+
+    <section class="section shell" id="kontakt">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Kontakt</span>
+          <h2>Objednaj si svoj pohár</h2>
+          <p>Objednávku môžeš vytvoriť cez web alebo sa ozvať telefonicky.</p>
+        </div>
+      </div>
+
+      <div class="contact-grid">
+        <a class="contact-card" href="tel:+421908356858">
+          <span>📞</span>
+          <div><small>Telefón</small><b id="contactPhone">0908 356 858</b></div>
+        </a>
+        <div class="contact-card">
+          <span>📍</span>
+          <div><small>Adresa</small><b id="contactAddress">Likavka 290</b></div>
+        </div>
+        <div class="contact-card">
+          <span>📱</span>
+          <div><small>Facebook</small><b id="contactFacebook">Včelia Farma Slnečná</b></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-grid">
+      <div>
+        <a class="brand footer-brand" href="#top">
+          <span class="logo-mark">🐝</span>
+          <span class="brand-copy"><strong id="footerBrand">Medlove</strong><small>Včelia farma Slnečná</small></span>
+        </a>
+        <p id="footerText">Poctivý slovenský med z Likavky priamo od včelára.</p>
+      </div>
+
+      <div>
+        <b>Obchod</b>
+        <a href="#produkty">Naše medy</a>
+        <a href="#farma">O farme</a>
+        <a href="#kontakt">Kontakt</a>
+      </div>
+
+      <div>
+        <b>Informácie</b>
+        <a href="#">Doprava a platba</a>
+        <a href="#">Obchodné podmienky</a>
+        <a href="#">Ochrana osobných údajov</a>
+      </div>
+
+      <div>
+        <b>Správa</b>
+        <a href="admin.html">Admin panel</a>
+      </div>
+    </div>
+
+    <div class="shell footer-bottom">
+      <span id="copyright">© 2026 Medlove – Včelia farma Slnečná</span>
+      <span>Likavka</span>
+    </div>
+  </footer>
+
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="drawer-head">
+      <div>
+        <span class="eyebrow">Nákup</span>
+        <h3>Košík</h3>
+      </div>
+      <button id="closeCart">×</button>
+    </div>
+
+    <div class="free-delivery-box" id="freeDeliveryBox">
+      <div class="free-delivery-text" id="freeDeliveryText">Pridaj 3 kusy a máš lokálny dovoz zdarma.</div>
+      <div class="free-delivery-track"><span id="freeDeliveryProgress"></span></div>
+    </div>
+
+    <div class="cart-items" id="cartItems"></div>
+
+    <div class="cart-summary">
+      <div><span>Medzisúčet</span><b id="cartSubtotal">0,00 €</b></div>
+      <div><span>Doprava</span><b id="cartDelivery">podľa výberu</b></div>
+      <div class="sum"><span>Spolu</span><b id="cartTotal">0,00 €</b></div>
+      <button class="btn btn-primary full" id="checkoutBtn">Pokračovať k objednávke</button>
+    </div>
+  </aside>
+
+  <div class="modal hidden" id="productModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close="productModal">×</button>
+      <div class="product-modal-grid">
+        <div class="product-modal-image" id="modalProductImage"></div>
+        <div>
+          <span class="eyebrow" id="modalProductType">Med</span>
+          <h2 id="modalProductName"></h2>
+          <p id="modalProductDescription"></p>
+          <div class="product-modal-meta">
+            <b id="modalProductPrice"></b>
+            <span id="modalProductWeight"></span>
+          </div>
+          <div class="availability" id="modalProductStock"></div>
+          <button class="btn btn-primary full" id="modalAddToCart">Pridať do košíka</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="checkoutModal">
+    <div class="modal-card checkout-card">
+      <button class="modal-close" data-close="checkoutModal">×</button>
+      <span class="eyebrow">Objednávka</span>
+      <h2>Dokončenie objednávky</h2>
+
+      <form id="checkoutForm">
+        <div class="form-grid">
+          <label>Meno a priezvisko<input id="orderName" required></label>
+          <label>Telefón<input id="orderPhone" required></label>
+        </div>
+
+        <label>E-mail<input id="orderEmail" type="email"></label>
+
+        <div class="form-grid">
+          <label>Spôsob prevzatia
+            <select id="orderDelivery">
+              <option value="pickup">Osobný odber – Likavka 290</option>
+              <option value="local">Dovoz – Ružomberok a blízke okolie</option>
+              <option value="other">Iné miesto – dohoda</option>
+            </select>
+          </label>
+
+          <label>Platba
+            <select id="orderPayment">
+              <option value="cash">Hotovosť pri prevzatí</option>
+              <option value="transfer">Bankový prevod – demo</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Adresa / miesto doručenia<input id="orderAddress" placeholder="Pri osobnom odbere nemusíš vypĺňať"></label>
+        <label>Poznámka<textarea id="orderNote" rows="3"></textarea></label>
+
+        <div class="checkout-total">
+          <span>Spolu</span>
+          <b id="checkoutTotal">0,00 €</b>
+        </div>
+
+        <button class="btn btn-primary full" type="submit">Vytvoriť objednávku</button>
+        <p class="form-note">Demo verzia – objednávka sa zatiaľ uloží iba v tomto prehliadači.</p>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>

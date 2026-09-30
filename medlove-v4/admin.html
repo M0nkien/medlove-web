@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15130f">
+  <title>Admin • Medlove</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body">
+  <section class="login-screen" id="loginScreen">
+    <div class="login-grid">
+      <div class="login-intro">
+        <span class="logo-mark big">🐝</span>
+        <span class="eyebrow">Medlove</span>
+        <h1>Admin panel</h1>
+        <p>Správa medov, skladu, objednávok a obsahu webu Včelej farmy Slnečná.</p>
+      </div>
+
+      <form class="login-card" id="loginForm">
+        <h2>Prihlásenie</h2>
+        <label>E-mail<input id="adminEmail" type="email" value="admin@medlove.sk" required></label>
+        <label>Heslo<input id="adminPassword" type="password" required></label>
+        <button class="btn btn-primary full" type="submit">Prihlásiť sa</button>
+        <p class="demo-note">Demo: <b>admin@medlove.sk</b> / <b>med123</b></p>
+        <a href="index.html" class="back-link">← Späť na web</a>
+      </form>
+    </div>
+  </section>
+
+  <div class="admin-app hidden" id="adminApp">
+    <header class="admin-header">
+      <div class="admin-brand">
+        <span class="logo-mark">🐝</span>
+        <span><strong id="adminBrandName">Medlove</strong><small>Včelia farma Slnečná</small></span>
+      </div>
+
+      <div class="admin-actions">
+        <a class="btn btn-dark-ghost" href="index.html">Zobraziť web</a>
+        <button class="btn btn-danger" id="logoutBtn">Odhlásiť</button>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <span class="side-label">Prehľad</span>
+        <button class="admin-tab active" data-page="dashboard">📊 Dashboard</button>
+
+        <span class="side-label">Obchod</span>
+        <button class="admin-tab" data-page="products">🍯 Produkty <b id="productCountSide">0</b></button>
+        <button class="admin-tab" data-page="orders">📦 Objednávky <b id="orderCountSide">0</b></button>
+        <button class="admin-tab" data-page="stock">📚 Sklad</button>
+
+        <span class="side-label">Web</span>
+        <button class="admin-tab" data-page="settings">⚙️ Nastavenia</button>
+        <button class="admin-tab" data-page="backup">💾 Záloha</button>
+      </aside>
+
+      <main class="admin-main">
+        <section class="admin-page active" id="dashboard">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Prehľad</span>
+              <h1>Vitaj v Medlove</h1>
+              <p>Tu vidíš najdôležitejšie informácie o obchode.</p>
+            </div>
+            <button class="btn btn-primary" data-jump="products">+ Pridať produkt</button>
+          </div>
+
+          <div class="stats">
+            <article><span>Produkty</span><b id="statProducts">0</b><small>v katalógu</small></article>
+            <article><span>Objednávky</span><b id="statOrders">0</b><small>celkom</small></article>
+            <article><span>Nové</span><b id="statNew">0</b><small>na vybavenie</small></article>
+            <article><span>Tržby</span><b id="statRevenue">0 €</b><small>bez zrušených</small></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="admin-card">
+              <div class="admin-card-head">
+                <div><span class="eyebrow">Objednávky</span><h3>Posledné objednávky</h3></div>
+                <button class="text-btn" data-jump="orders">Všetky →</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>ID</th><th>Zákazník</th><th>Suma</th><th>Stav</th></tr></thead>
+                  <tbody id="dashboardOrders"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="admin-card">
+              <span class="eyebrow">Sklad</span>
+              <h3>Nízke zásoby</h3>
+              <div id="lowStockList" class="low-stock-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-page" id="products">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Katalóg</span>
+              <h1>Produkty</h1>
+              <p>Spravuj ponuku medov a ďalších produktov.</p>
+            </div>
+            <button class="btn btn-primary" id="addProductBtn">+ Pridať produkt</button>
+          </div>
+
+          <article class="admin-card">
+            <div class="admin-toolbar">
+              <div class="search wide"><span>⌕</span><input id="adminProductSearch" placeholder="Hľadať produkt..."></div>
+              <select id="adminProductFilter">
+                <option value="all">Všetky</option>
+                <option value="active">Aktívne</option>
+                <option value="inactive">Skryté</option>
+                <option value="low">Nízky sklad</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Produkt</th><th>Cena</th><th>Balenie</th><th>Sklad</th><th>Stav</th><th>Akcie</th></tr></thead>
+                <tbody id="productsTable"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-page" id="orders">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Predaj</span>
+              <h1>Objednávky</h1>
+              <p>Kontroluj nové objednávky a ich stav.</p>
+            </div>
+          </div>
+
+          <article class="admin-card">
+            <div class="admin-toolbar">
+              <div class="search wide"><span>⌕</span><input id="orderSearch" placeholder="ID, meno alebo telefón..."></div>
+              <select id="orderFilter">
+                <option value="all">Všetky stavy</option>
+                <option value="new">Nové</option>
+                <option value="processing">Spracováva sa</option>
+                <option value="ready">Pripravené</option>
+                <option value="done">Vybavené</option>
+                <option value="cancelled">Zrušené</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Zákazník</th><th>Suma</th><th>Dátum</th><th>Prevzatie</th><th>Stav</th><th></th></tr></thead>
+                <tbody id="ordersTable"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="admin-page" id="stock">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Sklad</span>
+              <h1>Zásoby</h1>
+              <p>Rýchlo uprav dostupné množstvo jednotlivých medov.</p>
+            </div>
+          </div>
+          <div class="stock-grid" id="stockGrid"></div>
+        </section>
+
+        <section class="admin-page" id="settings">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Web</span>
+              <h1>Nastavenia stránky</h1>
+              <p>Meníš údaje, ktoré sa zobrazujú návštevníkom.</p>
+            </div>
+          </div>
+
+          <form class="settings-grid" id="settingsForm">
+            <article class="admin-card">
+              <h3>Značka</h3>
+              <label>Názov<input id="setShopName"></label>
+              <label>Podtitul<input id="setSubtitle"></label>
+              <label>Hlavný nadpis<textarea id="setHeroTitle" rows="2"></textarea></label>
+              <label>Úvodný text<textarea id="setHeroText" rows="4"></textarea></label>
+            </article>
+
+            <article class="admin-card">
+              <h3>Kontakt</h3>
+              <label>Telefón<input id="setPhone"></label>
+              <label>Adresa<input id="setAddress"></label>
+              <label>Facebook názov<input id="setFacebook"></label>
+              <label>Oblasť bezplatného dovozu<input id="setDeliveryArea"></label>
+            </article>
+
+            <article class="admin-card">
+              <h3>O farme</h3>
+              <label>Nadpis<input id="setAboutTitle"></label>
+              <label>Text<textarea id="setAboutText" rows="7"></textarea></label>
+              <label>Text v pätičke<textarea id="setFooterText" rows="3"></textarea></label>
+            </article>
+
+            <article class="admin-card">
+              <h3>Doprava a banner</h3>
+              <label>Počet kusov pre bezplatný lokálny dovoz<input id="setFreeDeliveryQty" type="number" min="1"></label>
+              <label>Oznamovací banner<textarea id="setAnnouncement" rows="3"></textarea></label>
+              <label class="check-row"><input id="setAnnouncementActive" type="checkbox"> Zobraziť banner</label>
+            </article>
+
+            <div class="save-bar"><button class="btn btn-primary" type="submit">Uložiť nastavenia</button></div>
+          </form>
+        </section>
+
+        <section class="admin-page" id="backup">
+          <div class="admin-page-head">
+            <div>
+              <span class="eyebrow">Dáta</span>
+              <h1>Záloha a obnova</h1>
+              <p>Exportuj si aktuálne údaje alebo obnov ukážkovú verziu.</p>
+            </div>
+          </div>
+
+          <div class="backup-grid">
+            <article class="admin-card">
+              <h3>Exportovať dáta</h3>
+              <p>Produkty, objednávky a nastavenia sa uložia do JSON súboru.</p>
+              <button class="btn btn-primary" id="exportBtn">Stiahnuť zálohu</button>
+            </article>
+
+            <article class="admin-card">
+              <h3>Obnoviť demo</h3>
+              <p>Prepíše aktuálne lokálne dáta pôvodnou verziou Medlove.</p>
+              <button class="btn btn-danger" id="resetBtn">Obnoviť demo dáta</button>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="adminProductModal">
+    <div class="modal-card admin-product-card">
+      <button class="modal-close" data-close="adminProductModal">×</button>
+      <span class="eyebrow">Produkt</span>
+      <h2 id="productModalTitle">Pridať produkt</h2>
+
+      <form id="productForm">
+        <input type="hidden" id="productId">
+        <div class="form-grid">
+          <label>Názov<input id="productName" required></label>
+          <label>Typ<input id="productType" value="Med"></label>
+        </div>
+        <div class="form-grid">
+          <label>Cena (€)<input id="productPrice" type="number" step="0.01" min="0" required></label>
+          <label>Sklad (ks)<input id="productStock" type="number" min="0" required></label>
+        </div>
+        <div class="form-grid">
+          <label>Balenie<input id="productWeight" value="950 g"></label>
+          <label>Emoji / URL obrázka<input id="productImage" placeholder="🌼 alebo https://..."></label>
+        </div>
+        <label>Popis<textarea id="productDescription" rows="4"></textarea></label>
+        <div class="form-grid">
+          <label>Poradie<input id="productOrder" type="number" min="0"></label>
+          <label class="check-box"><input id="productFeatured" type="checkbox"> Odporúčaný produkt</label>
+        </div>
+        <label class="check-row"><input id="productActive" type="checkbox" checked> Produkt je aktívny</label>
+        <button class="btn btn-primary full" type="submit">Uložiť produkt</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="orderDetailModal">
+    <div class="modal-card order-detail-card">
+      <button class="modal-close" data-close="orderDetailModal">×</button>
+      <span class="eyebrow">Objednávka</span>
+      <h2 id="orderDetailTitle"></h2>
+      <div id="orderDetailContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="admin.js"></script>
+</body>
+</html>
