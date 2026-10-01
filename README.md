@@ -77,3 +77,10 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Objednávky platené kartou rezervujú sklad. Ak Stripe relácia vyprší, podpisaný webhook vráti sklad. Nastav a otestuj webhook pred spustením; pre produkciu je vhodné doplniť pravidelnú reconciliáciu neuzavretých platieb.
 - API používa kontrolu origin a jednoduchý rate limiter; pred verejným spustením je vhodná ďalšia anti-spam ochrana a monitoring.
 - Adminovi záloha JSON umožní export; skutočné obnovenie produkčnej databázy sa robí cez overený backup, nie tlačidlom „reset demo“.
+
+## V6.1 – overenie platby Stripe (2026-10-02)
+- Backend kontroluje výsledok funkcie `mark_medlove_order_paid` a pri neúspechu nevracia falošné potvrdenie webhooku.
+- `GET /api/orders/:code/payment-status` overuje skutočný Stripe Checkout Session (ID, menu EUR, cenu, väzbu na objednávku) a bezpečne zosúladí `pending → paid`. Endpoint obsahuje rate limit a nikdy nepotvrdzuje platbu iba podľa návratu zákazníka.
+- `public/success.html` volá serverové overenie a zobrazuje potvrdený alebo stále čakajúci stav.
+- Po nasadení Renderu skontroluj `/api/health` (verzia `6.1.0`), Netlify deploy a staré objednávky otvorením `/success.html?order=KOD`. Neopakuj platbu ani ručne nenastavuj `paid` bez overenia Stripe.
+- Webhook v Stripe musí naďalej používať `/api/stripe/webhook` a platný podpisový `whsec_...` kľúč uložený iba v Render Environment.
