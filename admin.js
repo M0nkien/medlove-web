@@ -1,12 +1,33 @@
+async function testSupabase()
+{
+    const { data, error } =
+        await supabaseClient
+            .from("products")
+            .select("*");
+
+
+    if (error)
+    {
+        console.error(
+            "Supabase chyba:",
+            error
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Produkty zo Supabase:",
+        data
+    );
+}
+
+
+testSupabase();
+
 const KEYS={products:"medlove_products",orders:"medlove_orders",settings:"medlove_settings"};
 const EMAIL="admin@medlove.sk",PASSWORD="med123";
-
-const DEFAULT_PRODUCTS=[
-{id:1,name:"Kvetový med",type:"Med",price:10,stock:18,weight:"950 g",image:"🌸",description:"Jemná chuť a vôňa lúčnych kvetov. Poctivý med vhodný na každodenné použitie.",active:true,featured:true,order:1},
-{id:2,name:"Agátový med",type:"Med",price:10,stock:14,weight:"950 g",image:"🌼",description:"Svetlý, jemný a veľmi lahodný med s príjemnou chuťou.",active:true,featured:true,order:2},
-{id:3,name:"Pastovaný med",type:"Med",price:10,stock:10,weight:"950 g",image:"🍯",description:"Krémový a lahodný med s jemnou konzistenciou, ktorá sa výborne natiera.",active:true,featured:true,order:3},
-{id:4,name:"Medovicový med",type:"Med",price:11,stock:8,weight:"950 g",image:"🌲",description:"Výrazná chuť lesnej medovice a tmavšia farba pre milovníkov plnšieho medu.",active:true,featured:true,order:4}
-];
 
 const DEFAULT_ORDERS=[
 {id:"MED-1003",customer:"Ján Novák",phone:"0900 111 222",email:"jan@example.sk",delivery:"local",payment:"cash",address:"Ružomberok",note:"",subtotal:30,deliveryCost:0,total:30,qty:3,date:"29. 9. 2026 18:25",status:"new",items:[{id:1,name:"Kvetový med",price:10,qty:1},{id:2,name:"Agátový med",price:10,qty:1},{id:3,name:"Pastovaný med",price:10,qty:1}]},
@@ -28,14 +49,6 @@ announcementActive:true,
 aboutTitle:"Príroda. Kvalita. Poctivosť.",
 aboutText:"Medlove je rodinná včelia farma z Likavky. Našou prioritou je poctivá starostlivosť o včely, lokálny pôvod a kvalitný med, ktorý putuje priamo od včelára k zákazníkovi.",
 footerText:"Poctivý slovenský med z Likavky priamo od včelára."
-};
-
-function init(){
- if(!localStorage.getItem(KEYS.products))localStorage.setItem(KEYS.products,JSON.stringify(DEFAULT_PRODUCTS));
- if(!localStorage.getItem(KEYS.orders))localStorage.setItem(KEYS.orders,JSON.stringify(DEFAULT_ORDERS));
- if(!localStorage.getItem(KEYS.settings))localStorage.setItem(KEYS.settings,JSON.stringify(DEFAULT_SETTINGS));
-}
-init();
 
 const $=id=>document.getElementById(id);
 const getProducts=()=>JSON.parse(localStorage.getItem(KEYS.products)||"[]");
