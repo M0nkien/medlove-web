@@ -55,7 +55,7 @@ app.post('/api/stripe/webhook',express.raw({type:'application/json',limit:'256kb
      throw Error('Databáza nepotvrdila platbu '+order.order_code);
    }
    console.log('Potvrdený Stripe checkout:',order.order_code);
-   await notifySafe(order.id);
+   void notifySafe(order.id);
   }
   if(event.type==='checkout.session.expired'){
    const {data:order,error}=await db.from('orders').select('id').eq('stripe_checkout_session_id',session.id).maybeSingle();
@@ -70,7 +70,7 @@ app.use(express.json({limit:'25kb'}));
 
 // Overenie platby sa vykonáva výhradne na serveri podľa Stripe Checkout Session.
 async function verifyAndSyncCheckout(order) {
- if(order.payment_status==='paid') {await notifySafe(order.id);return 'paid';}
+ if(order.payment_status==='paid') {void notifySafe(order.id);return 'paid';}
  if(order.payment_status!=='pending') return order.payment_status;
  if(!stripe||!order.stripe_checkout_session_id) return 'pending';
  const session=await stripe.checkout.sessions.retrieve(order.stripe_checkout_session_id);
@@ -89,7 +89,7 @@ async function verifyAndSyncCheckout(order) {
     throw Error('Databáza nepotvrdila platbu '+order.order_code);
   }
   console.log('Stripe platba potvrdená v databáze:',order.order_code);
-  await notifySafe(order.id);
+  void notifySafe(order.id);
   return 'paid';
  }
  if(session.status==='expired'){
@@ -152,7 +152,7 @@ app.post('/api/orders',orderLimit,async(req,res)=>{
   if(result.error)throw result.error;
   created=result.data?.[0];if(!created)throw Error('Databáza nevrátila objednávku.');
   if(payment==='cash'){
-   await notifySafe(created.order_id);
+   void notifySafe(created.order_id);
    return res.status(201).json({order_code:created.order_code,total:created.total});
   }
 
@@ -212,7 +212,7 @@ async function reconcilePayments(){
        if(check.error||check.data?.payment_status!=='paid')
         throw Error('Rekonciliácia nepotvrdila platbu '+order.id);
       }
-      await notifySafe(order.id);
+      void notifySafe(order.id);
     }else if(session.status==='expired'){
       const r=await db.rpc('release_medlove_pending_order',{p_order_id:order.id,p_session_id:sid});if(r.error)throw r.error;
     }else if(session.status==='open'){
