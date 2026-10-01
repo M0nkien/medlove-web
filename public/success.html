@@ -1,1 +1,56 @@
-<!doctype html><html lang="sk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Platba • Medlove</title><link rel="stylesheet" href="style.css"></head><body><main class="shell section" style="max-width:660px;text-align:center"><div style="font-size:66px">🍯</div><h1>Ďakujeme za objednávku!</h1><p>Platba sa práve overuje. Objednávku pripravíme až po potvrdení platby od Stripe. Ak sa platba nepotvrdila, kontaktujeme ťa alebo môžeš objednávku zopakovať.</p><p id="orderCode"></p><a class="btn btn-primary" href="index.html">Späť do obchodu</a></main><script>const p=new URLSearchParams(location.search); const c=p.get('order');if(c && /^[A-Z0-9-]{1,40}$/.test(c)) document.getElementById('orderCode').textContent='Číslo objednávky: '+c;</script></body></html>
+<!doctype html>
+<html lang="sk">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Overenie platby • Medlove</title>
+ <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ <main class="shell section" style="max-width:660px;text-align:center">
+  <div style="font-size:66px">🍯</div>
+  <h1>Ďakujeme za objednávku!</h1>
+  <p id="paymentMessage" role="status" aria-live="polite">Overujeme platbu cez Stripe. Počkaj, prosím.</p>
+  <p id="orderCode"></p>
+  <a class="btn btn-primary" href="index.html">Späť do obchodu</a>
+ </main>
+ <script src="config.js"></script>
+ <script>
+ (async function(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('order');
+  const message=document.getElementById('paymentMessage');
+  if(!code||!/^MED-[A-F0-9]{12}$/.test(code)){
+   message.textContent='Chýba platné číslo objednávky. Kontaktuj nás, ak už platba prebehla.';
+   return;
+  }
+  document.getElementById('orderCode').textContent='Číslo objednávky: '+code;
+  const api=window.MEDLOVE_CONFIG?.apiBaseUrl;
+  if(!api||api.includes('REPLACE_WITH_RENDER_URL')){
+   message.textContent='Overenie platby nie je momentálne dostupné. Ak si zaplatil, objednávku neopakuj.';
+   return;
+  }
+  for(let attempt=0;attempt<5;attempt++){
+   try{
+    const response=await fetch(api+'/api/orders/'+encodeURIComponent(code)+'/payment-status',{cache:'no-store'});
+    if(!response.ok)throw Error('Overenie momentálne nedostupné');
+    const data=await response.json();
+    if(data.payment_status==='paid'){
+     message.textContent='Platba bola úspešne potvrdená. Objednávku pripravíme na vybavenie.';
+     return;
+    }
+    if(data.payment_status==='failed'||data.payment_status==='refunded'){
+     message.textContent='Platbu sa nepodarilo potvrdiť. Ak ti boli peniaze strhnuté, neplať znova a kontaktuj nás.';
+     return;
+    }
+    message.textContent='Platba sa ešte overuje. Neodosielaj novú platbu, kým sa overenie nedokončí.';
+   }catch(err){
+    message.textContent='Overenie platby sa momentálne nepodarilo. Ak ti boli peniaze strhnuté, neplať znova; kontaktuj nás s číslom objednávky.';
+   }
+   if(attempt<4)await new Promise(resolve=>setTimeout(resolve,3000));
+  }
+ })();
+ </script>
+</body>
+</html>
