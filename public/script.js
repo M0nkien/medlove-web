@@ -100,7 +100,7 @@ $('checkoutForm').onsubmit=async e=>{
   if(payment==='card'){location.assign(result.checkout_url);return}
   toast('Objednávka '+result.order_code+' bola prijatá.');await loadStore();alert('Ďakujeme! Objednávka '+result.order_code+' bola prijatá. Ozveme sa telefonicky.');
  }catch(err){console.error(err);toast(err.message||'Objednávku sa nepodarilo odoslať.');}
- finally{submit.disabled=false;submit.textContent='Vytvoriť objednávku'}
+ finally{submit.disabled=false;submit.textContent='Objednať s povinnosťou platby'}
 };
 $('productSearch').oninput=renderProducts;$('sortSelect').onchange=renderProducts;
 $('mobileMenu').onclick=()=>$('mainNav').classList.toggle('open');$('mainNav').querySelectorAll('a').forEach(a=>a.onclick=()=>$('mainNav').classList.remove('open'));$('closeAnnouncement').onclick=()=>$('topNote').classList.add('hidden');
