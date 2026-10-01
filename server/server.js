@@ -4,6 +4,7 @@ const express=require('express');
 const rateLimit=require('express-rate-limit');
 const Stripe=require('stripe');
 const {createClient}=require('@supabase/supabase-js');
+const {createNotifier}=require('./email');
 
 const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
 const frontendUrl=(process.env.FRONTEND_URL||'http://localhost:5500').replace(/\/$/,'');
@@ -13,6 +14,7 @@ const supabaseKey=process.env.SUPABASE_SECRET_KEY;
 if(!supabaseUrl||!supabaseKey){console.error('Chýba SUPABASE_URL alebo SUPABASE_SECRET_KEY');process.exit(1)}
 const db=createClient(supabaseUrl,supabaseKey,{auth:{autoRefreshToken:false,persistSession:false}});
 const stripe=process.env.STRIPE_SECRET_KEY?new Stripe(process.env.STRIPE_SECRET_KEY):null;
+const mailer=createNotifier(db);
 
 app.use((req,res,next)=>{
  res.setHeader('Access-Control-Allow-Origin',frontendUrl);
@@ -52,6 +54,7 @@ app.post('/api/stripe/webhook',express.raw({type:'application/json',limit:'256kb
      throw Error('Databáza nepotvrdila platbu '+order.order_code);
    }
    console.log('Potvrdený Stripe checkout:',order.order_code);
+   await mailer.notify(order.id);
   }
   if(event.type==='checkout.session.expired'){
    const {data:order,error}=await db.from('orders').select('id').eq('stripe_checkout_session_id',session.id).maybeSingle();
@@ -66,7 +69,7 @@ app.use(express.json({limit:'25kb'}));
 
 // Overenie platby sa vykonáva výhradne na serveri podľa Stripe Checkout Session.
 async function verifyAndSyncCheckout(order) {
- if(order.payment_status==='paid') return 'paid';
+ if(order.payment_status==='paid') {await mailer.notify(order.id);return 'paid';}
  if(order.payment_status!=='pending') return order.payment_status;
  if(!stripe||!order.stripe_checkout_session_id) return 'pending';
  const session=await stripe.checkout.sessions.retrieve(order.stripe_checkout_session_id);
@@ -85,6 +88,7 @@ async function verifyAndSyncCheckout(order) {
     throw Error('Databáza nepotvrdila platbu '+order.order_code);
   }
   console.log('Stripe platba potvrdená v databáze:',order.order_code);
+  await mailer.notify(order.id);
   return 'paid';
  }
  if(session.status==='expired'){
@@ -116,7 +120,7 @@ app.get('/api/orders/:code/payment-status',paymentStatusLimit,async(req,res)=>{
  }
 });
 
-app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.1.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET)}));
+app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.2.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
 
 const orderLimit=rateLimit({windowMs:30*60*1000,max:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Príliš veľa pokusov. Skús to o chvíľu.'}});
 app.post('/api/orders',orderLimit,async(req,res)=>{
@@ -146,7 +150,10 @@ app.post('/api/orders',orderLimit,async(req,res)=>{
   });
   if(result.error)throw result.error;
   created=result.data?.[0];if(!created)throw Error('Databáza nevrátila objednávku.');
-  if(payment==='cash')return res.status(201).json({order_code:created.order_code,total:created.total});
+  if(payment==='cash'){
+   await mailer.notify(created.order_id);
+   return res.status(201).json({order_code:created.order_code,total:created.total});
+  }
 
   const lines=await db.from('order_items').select('product_name,unit_price,quantity').eq('order_id',created.order_id);
   if(lines.error||!lines.data?.length)throw lines.error||Error('Chýbajú položky objednávky.');
@@ -204,6 +211,7 @@ async function reconcilePayments(){
        if(check.error||check.data?.payment_status!=='paid')
         throw Error('Rekonciliácia nepotvrdila platbu '+order.id);
       }
+      await mailer.notify(order.id);
     }else if(session.status==='expired'){
       const r=await db.rpc('release_medlove_pending_order',{p_order_id:order.id,p_session_id:sid});if(r.error)throw r.error;
     }else if(session.status==='open'){
@@ -219,5 +227,8 @@ async function reconcilePayments(){
 }
 setTimeout(reconcilePayments,20*1000).unref();
 setInterval(reconcilePayments,10*60*1000).unref();
+// Po výpadku poskytovateľa znovu spracujeme neodoslané potvrdenia.
+setTimeout(()=>mailer.sendPending().catch(e=>console.error('E-mailová fronta:',e.message)),30*1000).unref();
+setInterval(()=>mailer.sendPending().catch(e=>console.error('E-mailová fronta:',e.message)),10*60*1000).unref();
 
 app.listen(port,'0.0.0.0',()=>console.log('Medlove API na porte '+port));
