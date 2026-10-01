@@ -46,6 +46,11 @@ app.post('/api/stripe/webhook',express.raw({type:'application/json',limit:'256kb
     p_payment_intent:typeof session.payment_intent==='string'?session.payment_intent:null
    });
    if(r.error)throw r.error;
+   if(r.data!==true){
+    const check=await db.from('orders').select('payment_status').eq('id',order.id).single();
+    if(check.error||check.data?.payment_status!=='paid')
+     throw Error('Databáza nepotvrdila platbu '+order.order_code);
+   }
    console.log('Potvrdený Stripe checkout:',order.order_code);
   }
   if(event.type==='checkout.session.expired'){
@@ -58,7 +63,60 @@ app.post('/api/stripe/webhook',express.raw({type:'application/json',limit:'256kb
 });
 
 app.use(express.json({limit:'25kb'}));
-app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.0.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET)}));
+
+// Overenie platby sa vykonáva výhradne na serveri podľa Stripe Checkout Session.
+async function verifyAndSyncCheckout(order) {
+ if(order.payment_status==='paid') return 'paid';
+ if(order.payment_status!=='pending') return order.payment_status;
+ if(!stripe||!order.stripe_checkout_session_id) return 'pending';
+ const session=await stripe.checkout.sessions.retrieve(order.stripe_checkout_session_id);
+ if(session.id!==order.stripe_checkout_session_id||session.metadata?.order_id!==order.id
+  ||session.currency!=='eur'||session.amount_total!==Math.round(Number(order.total)*100))
+   throw Error('Nesúlad údajov Stripe a objednávky '+order.order_code);
+ if(session.status==='complete'&&session.payment_status==='paid'){
+  const r=await db.rpc('mark_medlove_order_paid',{
+   p_order_id:order.id,p_session_id:session.id,
+   p_payment_intent:typeof session.payment_intent==='string'?session.payment_intent:null
+  });
+  if(r.error)throw r.error;
+  if(r.data!==true){
+   const check=await db.from('orders').select('payment_status').eq('id',order.id).single();
+   if(check.error||check.data?.payment_status!=='paid')
+    throw Error('Databáza nepotvrdila platbu '+order.order_code);
+  }
+  console.log('Stripe platba potvrdená v databáze:',order.order_code);
+  return 'paid';
+ }
+ if(session.status==='expired'){
+  const r=await db.rpc('release_medlove_pending_order',{p_order_id:order.id,p_session_id:session.id});
+  if(r.error)throw r.error;
+  return 'failed';
+ }
+ return 'pending';
+}
+
+const paymentStatusLimit=rateLimit({
+ windowMs:10*60*1000,max:25,standardHeaders:'draft-7',legacyHeaders:false
+});
+app.get('/api/orders/:code/payment-status',paymentStatusLimit,async(req,res)=>{
+ const code=String(req.params.code||'');
+ if(!/^MED-[A-F0-9]{12}$/.test(code))return res.status(400).json({error:'Neplatný kód objednávky.'});
+ try{
+  const {data:order,error}=await db.from('orders')
+   .select('id,order_code,total,payment_type,payment_status,stripe_checkout_session_id')
+   .eq('order_code',code).maybeSingle();
+  if(error)throw error;
+  if(!order)return res.status(404).json({error:'Objednávka sa nenašla.'});
+  if(order.payment_type!=='card')return res.json({payment_status:order.payment_status});
+  const status=await verifyAndSyncCheckout(order);
+  return res.json({payment_status:status});
+ }catch(err){
+  console.error('Nepodarilo sa overiť platbu:',code,err.message);
+  return res.status(503).json({error:'Overenie platby sa momentálne nepodarilo. Skús to neskôr.'});
+ }
+});
+
+app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.1.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET)}));
 
 const orderLimit=rateLimit({windowMs:30*60*1000,max:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Príliš veľa pokusov. Skús to o chvíľu.'}});
 app.post('/api/orders',orderLimit,async(req,res)=>{
@@ -141,6 +199,11 @@ async function reconcilePayments(){
        p_order_id:order.id,p_session_id:sid,
        p_payment_intent:typeof session.payment_intent==='string'?session.payment_intent:null
       });if(r.error)throw r.error;
+      if(r.data!==true){
+       const check=await db.from('orders').select('payment_status').eq('id',order.id).single();
+       if(check.error||check.data?.payment_status!=='paid')
+        throw Error('Rekonciliácia nepotvrdila platbu '+order.id);
+      }
     }else if(session.status==='expired'){
       const r=await db.rpc('release_medlove_pending_order',{p_order_id:order.id,p_session_id:sid});if(r.error)throw r.error;
     }else if(session.status==='open'){
