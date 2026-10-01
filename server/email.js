@@ -8,7 +8,8 @@ function createNotifier(db,env=process.env){
  const key=clean(env.RESEND_API_KEY).trim();
  const from=clean(env.EMAIL_FROM).trim();
  const owner=clean(env.ORDER_NOTIFICATION_EMAIL).trim();
- const enabled=Boolean(key&&from&&(validEmail(owner)||env.ENABLE_CUSTOMER_EMAILS==='true'));
+ const cutoff=Date.parse(clean(env.EMAIL_NOTIFICATIONS_FROM));
+ const enabled=Boolean(key&&from&&validEmail(owner)&&Number.isFinite(cutoff));
  if(key&&!from)console.warn('RESEND_API_KEY je nastavený, ale EMAIL_FROM chýba.');
  if(owner&&!validEmail(owner))console.warn('ORDER_NOTIFICATION_EMAIL nemá platný formát.');
  async function claim(orderId,kind){
@@ -41,10 +42,10 @@ function createNotifier(db,env=process.env){
  async function notify(orderId){
   if(!enabled)return;
   const {data:order,error}=await db.from('orders')
-   .select('id,order_code,customer_name,phone,email,delivery_type,delivery_address,note,payment_type,payment_status,total,status')
+   .select('id,created_at,order_code,customer_name,phone,email,delivery_type,delivery_address,note,payment_type,payment_status,total,status')
    .eq('id',orderId).maybeSingle();
   if(error)throw error;
-  if(!order||order.status==='cancelled')return;
+  if(!order||order.status==='cancelled'||Date.parse(order.created_at)<cutoff)return;
   if(order.payment_type==='card'&&order.payment_status!=='paid')return;
   if(order.payment_type!=='cash'&&order.payment_type!=='card')return;
   const lines=await db.from('order_items').select('product_name,quantity,unit_price,line_total').eq('order_id',orderId);
