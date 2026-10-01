@@ -31,7 +31,8 @@ function createNotifier(db,env=process.env){
     'Authorization':'Bearer '+key,'Content-Type':'application/json',
     'Idempotency-Key':idempotencyKey
    },
-   body:JSON.stringify({from,to:[to],subject,html,text})
+   body:JSON.stringify({from,to:[to],subject,html,text}),
+   signal:AbortSignal.timeout(10000)
   });
   const data=await result.json().catch(()=>({}));
   if(!result.ok||!data.id)throw Error('Resend HTTP '+result.status+' '+clean(data.message||data.name));
