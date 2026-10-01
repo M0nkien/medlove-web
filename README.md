@@ -84,3 +84,10 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - `public/success.html` volá serverové overenie a zobrazuje potvrdený alebo stále čakajúci stav.
 - Po nasadení Renderu skontroluj `/api/health` (verzia `6.1.0`), Netlify deploy a staré objednávky otvorením `/success.html?order=KOD`. Neopakuj platbu ani ručne nenastavuj `paid` bez overenia Stripe.
 - Webhook v Stripe musí naďalej používať `/api/stripe/webhook` a platný podpisový `whsec_...` kľúč uložený iba v Render Environment.
+
+## V6.2 – e-mailové notifikácie a príprava ostrého spustenia
+- Nové súbory: `server/email.js`, `sql/002_medlove_email.sql` (už aplikované na Supabase), `public/doprava-a-platba.html`, `PRE-SPUSTENIM.md`, interné právne návrhy v `docs/`.
+- Zmenené súbory: `server/server.js`, `server/package.json`, `server/.env.example`, `public/index.html` a `public/script.js`.
+- Pri hotovostnej objednávke alebo potvrdenej platbe kartou systém pripraví potvrdenie zákazníkovi (ak má e-mail) a upozornenie majiteľovi cez Resend. Doručenie sa eviduje v databáze; výpadok e-mailu nemení úspešný stav objednávky. E-maily sú vypnuté, kým v Render Environment nebudú nastavené všetky 4 premenné vrátane času aktivácie.
+- Nasadenie: GitHub main automaticky aktualizuje Netlify a podľa konfigurácie Render; inak Render → Manual Deploy → Deploy latest commit. Pre e-mail vyplň `RESEND_API_KEY`, `EMAIL_FROM`, `ORDER_NOTIFICATION_EMAIL` a `EMAIL_NOTIFICATIONS_FROM` podľa `PRE-SPUSTENIM.md` a urob nový test.
+- PRED LIVE: over údaje predávajúceho, etikety, sklad, vlastnú doménu a live Stripe. Návrhy z `docs/` nie sú právne schválené ani verejne prelinkované; nepredstieraj pripravenosť na ostrý predaj.
