@@ -1,52 +1,79 @@
-# MEDLOVE V4 – Včelia farma Slnečná
+**Presný návod nasadenia:** pozri [`NASADENIE-KROK-ZA-KROKOM.md`](NASADENIE-KROK-ZA-KROKOM.md).
 
-Táto verzia bola prerobená podľa reálneho materiálu včelej farmy.
+**V6 úpravy:** kontrola dostupnosti Render API pred dokončením objednávky; vypnutá platba kartou, ak Stripe ešte nie je aktívny; košík sa pri chýbajúcej Stripe URL nevymaže; aktualizovaný health check, dokumentácia a SEO metadáta.
 
-## Použité údaje
-- Medlove
-- Včelia farma Slnečná
-- Likavka 290
-- 0908 356 858
-- slogan / smerovanie: Poctivý med z Likavky
-- Kvetový med – 10 € / 950 g
-- Agátový med – 10 € / 950 g
-- Pastovaný med – 10 € / 950 g
-- Medovicový med – 11 € / 950 g
-- pri odbere od 3 ks lokálny dovoz do Ružomberka a blízkeho okolia zdarma
+# Medlove V6 – web + admin + Supabase + Render + Stripe Checkout
 
-## Súbory
-- index.html
-- admin.html
-- style.css
-- script.js
-- admin.js
+## Čo je už pripravené
+- Autentická fotka štyroch medov v úvode + predbežné výrezy produktov v `public/assets/`.
+- Verejný e-shop načítava aktuálne produkty a nastavenia priamo z existujúceho Supabase projektu Medlove.
+- Admin používa Supabase Auth a existujúce `admins` + RLS, spravuje produkty, fotografie (Supabase Storage), sklad, objednávky a texty.
+- Košík zostáva v `localStorage`, objednávku a cenu vytvára iba server cez databázovú transakciu.
+- Render server vie vytvoriť objednávku s hotovosťou alebo Stripe Checkout a overuje podpísaný webhook, platbu a sumu.
+- Databázová migrácia `sql/001_medlove_v5.sql` bola aplikovaná na existujúci projekt Medlove. **Nespúšťaj pôvodný zakladací SQL znova.**
+- Produkty a ceny z existujúceho Supabase projektu zostali zachované. Skladové množstvá sú stále pracovné, potvrď ich s majiteľom.
 
-## Demo admin
-E-mail: admin@medlove.sk
-Heslo: med123
+## 1. GitHub
+Vytvor samostatný repozitár Medlove, napr. `medlove-web`. Nahraj obsah tohto ZIP do koreňa. Súbor `server/.env.example` je iba šablóna; skutočný `.env` necommituj.
 
-## Admin vie
-- pridávať / upravovať / mazať produkty
-- meniť cenu, balenie, sklad a popis
-- skryť alebo zobraziť produkt
-- označiť produkt ako obľúbený
-- spravovať objednávky
-- meniť stav objednávky
-- rýchlo upravovať sklad
-- meniť názov, texty, telefón, adresu, Facebook názov
-- meniť počet kusov potrebný na bezplatný lokálny dovoz
-- meniť oznamovací banner
-- exportovať zálohu dát
+```
+git init
+git add .
+git commit -m "Medlove V5 Supabase and Stripe checkout"
+git branch -M main
+git remote add origin https://github.com/TVOJ-UCET/medlove-web.git
+git push -u origin main
+```
 
-## Dôležité
-Toto je stále prototyp cez localStorage. Pri ostrom spustení treba:
-- Supabase databázu
-- Supabase Auth
-- bezpečný backend
-- reálne objednávky a notifikácie
-- reálne platby podľa požiadaviek
-- originálne fotografie produktov
-- originálne logo vo vysokej kvalite
-- právne texty a nastavenie cookies podľa reálneho predaja
+## 2. Netlify
+New project → Import existing project → GitHub → `medlove-web`.
+- Build command: prázdny
+- Publish directory: `public` (nastavené tiež v `netlify.toml`).
+- Testovacia URL bude tvoja skutočná Netlify URL, nepoužívaj ilustračné názvy.
 
-Demo heslo nesmie zostať v produkcii.
+## 3. Supabase
+Projekt Medlove už je vytvorený, tabuľky `products`, `orders`, `order_items`, `shop_settings`, `admins` a migrácia V5 sú pripravené. Admin používateľa overíš cez Authentication → Users a priradenie v `public.admins`. `public/config.js` už obsahuje iba *verejnú* adresu a publishable key; tajný kľúč nesmie byť vo frontende.
+
+Obrázky sa dajú nahrávať v admin paneli do verejného bucketu `product-images`; nahrávať môže len autentifikovaný admin.
+
+## 4. Render (nutné pre reálne objednávky)
+Vytvor Render **Web Service** z rovnakého GitHub repozitára:
+- Root Directory: `server`
+- Runtime: Node
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health check path: `/api/health`
+- Nastav environment premenné podľa `server/.env.example`:
+  `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `FRONTEND_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+- `SUPABASE_SECRET_KEY` získaj zo Supabase backend API keys (service_role/secret), iba v Render Environment. NIKDY nie vo verejných súboroch ani v GitHube.
+- `FRONTEND_URL` nastav na presnú produkčnú/testovaciu URL Netlify vrátane `https://`, bez koncového `/`.
+- Potom vo `public/config.js` nahraď `apiBaseUrl` skutočnou URL Render služby. Commitni a pushni súbor do GitHubu.
+- CORS povoľuje presne `FRONTEND_URL`; ak zmeníš doménu, uprav ju aj v Renderi.
+
+## 5. Stripe (najskôr TEST režim)
+V Stripe si majiteľ farmy založí a overí svoj podnikateľský účet. V testovacom režime získaj `sk_test_...` pre Render Environment ako `STRIPE_SECRET_KEY`.
+
+Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
+- Endpoint: `https://TVOJ-RENDER.onrender.com/api/stripe/webhook`
+- Pridaj udalosti `checkout.session.completed` a `checkout.session.expired`.
+- Signing secret `whsec_...` vlož do `STRIPE_WEBHOOK_SECRET` iba v Renderi.
+- Prípadnú zmenu Stripe test → live musíš urobiť spolu s výmenou kľúča a webhook signing secret. Najprv otestuj v test režime.
+- Checkout platbu nikdy neoznačujeme za zaplatenú len pri návrate na `success.html` – rozhoduje overený webhook.
+- Ak Stripe nie je nakonfigurovaný, API vráti chybu pre online platbu; hotovosť môže fungovať, keď je Render + Supabase nastavený.
+
+## 6. Kontrola pred ostrým predajom
+1. V prehliadači otvor Netlify web; musí načítať 4 produkty zo Supabase.
+2. Prihlás sa do admina vlastným Supabase kontom, vyskúšaj zmenu ceny a nahranie fotografie.
+3. V Render otvor `/api/health`.
+4. Otestuj hotovostnú objednávku; over DB `orders` + `order_items` a sklad.
+5. Urob testovaciu Stripe Checkout objednávku a over `payment_status = paid` až po webhoooku.
+6. Over prerušenú/expirovanú platbu a vrátenie zásob.
+7. Pred spustením s majiteľom potvrď skutočné skladové zásoby, identifikáciu predávajúceho, súhlas s použitím fotky, údaje pre dopravu, obchodné podmienky, GDPR, reklamačný postup, informácie o výrobkoch a doručení, účtovníctvo a príslušné potravinárske požiadavky.
+
+## Dôležité poznámky
+- Foto zachytáva štyri poháre; priradenie výrezov k druhom je **predbežné podľa vzhľadu**, preto ho potvrď s výrobcom. Fotografie možno v admine nahradiť samostatnými.
+- Platobná možnosť pri prevzatí je aktuálne hotovosť; bankový prevod nebol implementovaný (bez potvrdeného postupu platby).
+- Pri lokálnom dovoze aplikácia vyžaduje aspoň nastavený počet kusov, doprava je potom zdarma. Pod tento limit ponúka osobný odber; nevymýšľame cenu dopravy.
+- Objednávky platené kartou rezervujú sklad. Ak Stripe relácia vyprší, podpisaný webhook vráti sklad. Nastav a otestuj webhook pred spustením; pre produkciu je vhodné doplniť pravidelnú reconciliáciu neuzavretých platieb.
+- API používa kontrolu origin a jednoduchý rate limiter; pred verejným spustením je vhodná ďalšia anti-spam ochrana a monitoring.
+- Adminovi záloha JSON umožní export; skutočné obnovenie produkčnej databázy sa robí cez overený backup, nie tlačidlom „reset demo“.

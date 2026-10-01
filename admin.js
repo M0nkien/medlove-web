@@ -1,200 +1,62 @@
-async function testSupabase()
-{
-    const { data, error } =
-        await supabaseClient
-            .from("products")
-            .select("*");
-
-
-    if (error)
-    {
-        console.error(
-            "Supabase chyba:",
-            error
-        );
-
-        return;
-    }
-
-
-    console.log(
-        "Produkty zo Supabase:",
-        data
-    );
-}
-
-
-testSupabase();
-
-const KEYS={products:"medlove_products",orders:"medlove_orders",settings:"medlove_settings"};
-const EMAIL="admin@medlove.sk",PASSWORD="med123";
-
-const DEFAULT_ORDERS=[
-{id:"MED-1003",customer:"Ján Novák",phone:"0900 111 222",email:"jan@example.sk",delivery:"local",payment:"cash",address:"Ružomberok",note:"",subtotal:30,deliveryCost:0,total:30,qty:3,date:"29. 9. 2026 18:25",status:"new",items:[{id:1,name:"Kvetový med",price:10,qty:1},{id:2,name:"Agátový med",price:10,qty:1},{id:3,name:"Pastovaný med",price:10,qty:1}]},
-{id:"MED-1002",customer:"Anna Malá",phone:"0905 333 444",email:"anna@example.sk",delivery:"pickup",payment:"cash",address:"",note:"Vyzdvihnem po 16:00",subtotal:22,deliveryCost:0,total:22,qty:2,date:"28. 9. 2026 12:10",status:"ready",items:[{id:4,name:"Medovicový med",price:11,qty:2}]}
-];
-
-const DEFAULT_SETTINGS={
-shopName:"Medlove",
-subtitle:"Včelia farma Slnečná",
-heroTitle:"Poctivý med priamo od včelára.",
-heroText:"Čerstvý slovenský med z rodinnej včelej farmy s dôrazom na prírodu, kvalitu a poctivosť.",
-phone:"0908 356 858",
-address:"Likavka 290",
-facebook:"Včelia Farma Slnečná",
-deliveryArea:"Ružomberok a blízke okolie",
-freeDeliveryQty:3,
-announcement:"🚚 Pri odbere od 3 ks dovoz do Ružomberka a blízkeho okolia zdarma.",
-announcementActive:true,
-aboutTitle:"Príroda. Kvalita. Poctivosť.",
-aboutText:"Medlove je rodinná včelia farma z Likavky. Našou prioritou je poctivá starostlivosť o včely, lokálny pôvod a kvalitný med, ktorý putuje priamo od včelára k zákazníkovi.",
-footerText:"Poctivý slovenský med z Likavky priamo od včelára."
-
+// Medlove V5 admin: Supabase Auth + RLS + Supabase Storage.
+const c=window.MEDLOVE_CONFIG,sb=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey);
 const $=id=>document.getElementById(id);
-const getProducts=()=>JSON.parse(localStorage.getItem(KEYS.products)||"[]");
-const setProducts=v=>localStorage.setItem(KEYS.products,JSON.stringify(v));
-const getOrders=()=>JSON.parse(localStorage.getItem(KEYS.orders)||"[]");
-const setOrders=v=>localStorage.setItem(KEYS.orders,JSON.stringify(v));
-const getSettings=()=>({...DEFAULT_SETTINGS,...JSON.parse(localStorage.getItem(KEYS.settings)||"{}")});
-const setSettings=v=>localStorage.setItem(KEYS.settings,JSON.stringify(v));
-const money=v=>Number(v).toLocaleString("sk-SK",{style:"currency",currency:"EUR"});
-function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
-
-function showApp(){$("loginScreen").classList.add("hidden");$("adminApp").classList.remove("hidden");renderAll()}
-if(sessionStorage.getItem("medlove_admin")==="1")showApp();
-
-$("loginForm").onsubmit=e=>{
- e.preventDefault();
- if($("adminEmail").value===EMAIL&&$("adminPassword").value===PASSWORD){sessionStorage.setItem("medlove_admin","1");showApp()}
- else toast("Nesprávny e-mail alebo heslo.");
-};
-$("logoutBtn").onclick=()=>{sessionStorage.removeItem("medlove_admin");location.reload()};
-
-function switchPage(id){
- document.querySelectorAll(".admin-tab").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
- document.querySelectorAll(".admin-page").forEach(p=>p.classList.toggle("active",p.id===id));
- window.scrollTo({top:0,behavior:"smooth"});
-}
-document.querySelectorAll(".admin-tab").forEach(b=>b.onclick=()=>switchPage(b.dataset.page));
-document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>switchPage(b.dataset.jump));
-
-function statusPill(s){
- const names={new:"Nová",processing:"Spracováva sa",ready:"Pripravená",done:"Vybavená",cancelled:"Zrušená"};
- return `<span class="status-pill status-${s}">${names[s]||s}</span>`;
-}
-
-function renderAll(){
- const p=getProducts(),o=getOrders(),s=getSettings();
- $("adminBrandName").textContent=s.shopName;
- $("productCountSide").textContent=p.length;
- $("orderCountSide").textContent=o.filter(x=>x.status==="new").length;
+const money=x=>Number(x).toLocaleString('sk-SK',{style:'currency',currency:'EUR'});
+const esc=x=>String(x??'').replace(/[&<>"']/g,z=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[z]));
+const statusNames={new:'Nová',processing:'Spracováva sa',ready:'Pripravená',done:'Vybavená',cancelled:'Zrušená'};
+const paymentNames={pending:'Čaká na platbu',paid:'Zaplatené',unpaid:'Pri prevzatí',failed:'Platba zlyhala',refunded:'Vrátené'};
+let products=[],orders=[],settings={},adminReady=false;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function statusPill(x){return `<span class="status-pill status-${x}">${statusNames[x]||esc(x)}</span>`}
+function paymentBadge(o){return o.payment_type==='card'?paymentNames[o.payment_status]||o.payment_status:'Hotovosť pri prevzatí'}
+async function showApp(){adminReady=true;$('loginScreen').classList.add('hidden');$('adminApp').classList.remove('hidden');await renderAll()}
+async function checkAdmin(){const r=await sb.rpc('is_admin');if(r.error)throw r.error;return r.data===true}
+$('loginForm').onsubmit=async e=>{e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:$('adminEmail').value.trim(),password:$('adminPassword').value});if(error)throw error;if(!await checkAdmin()){await sb.auth.signOut();throw Error('Používateľ nemá admin oprávnenia.')}await showApp()}catch(err){console.error(err);toast(err.message||'Prihlásenie zlyhalo.')}finally{submit.disabled=false}};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};
+async function restoreSession(){const {data,error}=await sb.auth.getSession();if(!error&&data.session){try{if(await checkAdmin())await showApp();else await sb.auth.signOut()}catch(err){console.warn(err)}}}
+function switchPage(id){document.querySelectorAll('.admin-tab').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('.admin-page').forEach(p=>p.classList.toggle('active',p.id===id));window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.admin-tab').forEach(b=>b.onclick=()=>switchPage(b.dataset.page));document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>switchPage(b.dataset.jump));
+async function renderAll(){
+ const [a,b,d]=await Promise.all([sb.from('products').select('*').order('sort_order'),sb.from('orders').select('*,order_items(*)').order('created_at',{ascending:false}),sb.from('shop_settings').select('*').eq('id',1).single()]);
+ if(a.error||b.error||d.error){const err=a.error||b.error||d.error;console.error(err);toast('Načítanie dát zlyhalo: '+err.message);return}
+ products=a.data||[];orders=b.data||[];settings=d.data||{};$('adminBrandName').textContent=settings.shop_name||'Medlove';$('productCountSide').textContent=products.length;$('orderCountSide').textContent=orders.filter(o=>o.status==='new'&&(o.payment_type!=='card'||o.payment_status==='paid')).length;
  renderDashboard();renderProducts();renderOrders();renderStock();loadSettings();
 }
-
-function renderDashboard(){
- const p=getProducts(),o=getOrders();
- $("statProducts").textContent=p.length;
- $("statOrders").textContent=o.length;
- $("statNew").textContent=o.filter(x=>x.status==="new").length;
- $("statRevenue").textContent=money(o.filter(x=>x.status!=="cancelled").reduce((sum,x)=>sum+Number(x.total||0),0));
- $("dashboardOrders").innerHTML=o.slice(0,5).map(x=>`<tr><td><b>${x.id}</b></td><td>${escapeHtml(x.customer)}</td><td>${money(x.total)}</td><td>${statusPill(x.status)}</td></tr>`).join("")||`<tr><td colspan="4">Žiadne objednávky.</td></tr>`;
- const low=p.filter(x=>x.stock<=5).sort((a,b)=>a.stock-b.stock);
- $("lowStockList").innerHTML=low.length?low.map(x=>`<div class="low-stock-item"><div><b>${escapeHtml(x.name)}</b><small>${escapeHtml(x.weight||"")}</small></div><span class="low-stock-value">${x.stock} ks</span></div>`).join(""):`<p class="demo-note">Zásoby sú v poriadku.</p>`;
+function renderDashboard(){const available=orders.filter(o=>o.status==='new'&&(o.payment_type!=='card'||o.payment_status==='paid'));
+ $('statProducts').textContent=products.length;$('statOrders').textContent=orders.length;$('statNew').textContent=available.length;$('statRevenue').textContent=money(orders.filter(o=>o.status==='done').reduce((s,o)=>s+Number(o.total),0));
+ $('dashboardOrders').innerHTML=orders.slice(0,5).map(o=>`<tr><td><b>${esc(o.order_code)}</b></td><td>${esc(o.customer_name)}</td><td>${money(o.total)}</td><td>${o.payment_type==='card'&&o.payment_status!=='paid'?esc(paymentBadge(o)):statusPill(o.status)}</td></tr>`).join('')||'<tr><td colspan="4">Žiadne objednávky.</td></tr>';
+ const low=products.filter(p=>p.stock<=5).sort((a,b)=>a.stock-b.stock);$('lowStockList').innerHTML=low.length?low.map(p=>`<div class="low-stock-item"><div><b>${esc(p.name)}</b><small>${esc(p.weight||'')}</small></div><span class="low-stock-value">${p.stock} ks</span></div>`).join(''):'<p>Zásoby sú v poriadku.</p>';
 }
-
-function renderProducts(){
- let list=getProducts();
- const q=$("adminProductSearch").value.trim().toLowerCase(),filter=$("adminProductFilter").value;
- if(q)list=list.filter(x=>`${x.name} ${x.type}`.toLowerCase().includes(q));
- if(filter==="active")list=list.filter(x=>x.active);
- if(filter==="inactive")list=list.filter(x=>!x.active);
- if(filter==="low")list=list.filter(x=>x.stock<=5);
- list.sort((a,b)=>a.order-b.order);
- $("productsTable").innerHTML=list.map(x=>`<tr>
- <td><b>${escapeHtml(x.image||"🍯")} ${escapeHtml(x.name)}</b><br><small>${escapeHtml(x.type||"Med")}${x.featured?" • Obľúbené":""}</small></td>
- <td>${money(x.price)}</td><td>${escapeHtml(x.weight||"")}</td>
- <td>${x.stock<=5?`<span class="low-stock-value">${x.stock} ks</span>`:`${x.stock} ks`}</td>
- <td><span class="product-state ${x.active?"active":"inactive"}">${x.active?"Aktívny":"Skrytý"}</span></td>
- <td class="actions"><button class="icon-btn" onclick="editProduct(${x.id})">✏️</button><button class="icon-btn" onclick="toggleProduct(${x.id})">${x.active?"👁️":"🙈"}</button><button class="icon-btn" onclick="duplicateProduct(${x.id})">⧉</button><button class="icon-btn" onclick="deleteProduct(${x.id})">🗑️</button></td>
- </tr>`).join("")||`<tr><td colspan="6">Žiadne produkty.</td></tr>`;
-}
-$("adminProductSearch").oninput=renderProducts;$("adminProductFilter").onchange=renderProducts;
-
-function openNewProduct(){
- $("productModalTitle").textContent="Pridať produkt";$("productForm").reset();$("productId").value="";$("productType").value="Med";$("productWeight").value="950 g";$("productActive").checked=true;$("productFeatured").checked=false;$("productOrder").value=getProducts().length+1;$("adminProductModal").classList.remove("hidden");document.body.classList.add("no-scroll");
-}
-$("addProductBtn").onclick=openNewProduct;
-
-function editProduct(id){
- const x=getProducts().find(p=>p.id===id);if(!x)return;
- $("productModalTitle").textContent="Upraviť produkt";$("productId").value=x.id;$("productName").value=x.name;$("productType").value=x.type||"Med";$("productPrice").value=x.price;$("productStock").value=x.stock;$("productWeight").value=x.weight||"";$("productImage").value=x.image||"";$("productDescription").value=x.description||"";$("productOrder").value=x.order||0;$("productFeatured").checked=!!x.featured;$("productActive").checked=!!x.active;$("adminProductModal").classList.remove("hidden");document.body.classList.add("no-scroll");
-}
+function renderProducts(){let list=[...products];const q=$('adminProductSearch').value.trim().toLowerCase(),filter=$('adminProductFilter').value;if(q)list=list.filter(p=>(p.name+' '+p.type).toLowerCase().includes(q));if(filter==='active')list=list.filter(p=>p.active);else if(filter==='inactive')list=list.filter(p=>!p.active);else if(filter==='low')list=list.filter(p=>p.stock<=5);$('productsTable').innerHTML=list.map(p=>`<tr><td><b>🍯 ${esc(p.name)}</b><br><small>${esc(p.type||'Med')}${p.featured?' • Obľúbené':''}</small></td><td>${money(p.price)}</td><td>${esc(p.weight||'')}</td><td>${p.stock<=5?`<b class="low-stock-value">${p.stock} ks</b>`:p.stock+' ks'}</td><td><span class="product-state ${p.active?'active':'inactive'}">${p.active?'Aktívny':'Skrytý'}</span></td><td class="actions"><button class="icon-btn" onclick="editProduct('${p.id}')" title="Upraviť">✏️</button><button class="icon-btn" onclick="toggleProduct('${p.id}')" title="Viditeľnosť">${p.active?'👁️':'🙈'}</button><button class="icon-btn" onclick="duplicateProduct('${p.id}')" title="Duplikovať">⧉</button><button class="icon-btn" onclick="deleteProduct('${p.id}')" title="Odstrániť">🗑️</button></td></tr>`).join('')||'<tr><td colspan="6">Žiadne produkty.</td></tr>'}
+$('adminProductSearch').oninput=renderProducts;$('adminProductFilter').onchange=renderProducts;
+function closeModal(id){$(id).classList.add('hidden');document.body.classList.remove('no-scroll')}
+function newProduct(){$('productModalTitle').textContent='Pridať produkt';$('productForm').reset();$('productId').value='';$('productType').value='Med';$('productWeight').value='950 g';$('productOrder').value=products.length+1;$('productActive').checked=true;$('adminProductModal').classList.remove('hidden');document.body.classList.add('no-scroll')}
+$('addProductBtn').onclick=newProduct;
+function editProduct(id){const p=products.find(p=>p.id===id);if(!p)return;$('productModalTitle').textContent='Upraviť produkt';$('productId').value=p.id;$('productName').value=p.name;$('productType').value=p.type||'Med';$('productPrice').value=p.price;$('productStock').value=p.stock;$('productWeight').value=p.weight||'';$('productImage').value=p.image_url||'';$('productDescription').value=p.description||'';$('productOrder').value=p.sort_order||0;$('productFeatured').checked=!!p.featured;$('productActive').checked=!!p.active;$('productPhoto').value='';$('adminProductModal').classList.remove('hidden');document.body.classList.add('no-scroll')}
 window.editProduct=editProduct;
-
-$("productForm").onsubmit=e=>{
- e.preventDefault();const list=getProducts(),id=$("productId").value;
- const item={id:id?Number(id):Date.now(),name:$("productName").value.trim(),type:$("productType").value.trim()||"Med",price:Number($("productPrice").value),stock:Number($("productStock").value),weight:$("productWeight").value.trim(),image:$("productImage").value.trim()||"🍯",description:$("productDescription").value.trim(),order:Number($("productOrder").value)||0,featured:$("productFeatured").checked,active:$("productActive").checked};
- if(id){const i=list.findIndex(x=>x.id===Number(id));if(i>=0)list[i]=item}else list.push(item);
- setProducts(list);closeModal("adminProductModal");renderAll();toast("Produkt bol uložený.");
-};
-
-function toggleProduct(id){const p=getProducts(),x=p.find(a=>a.id===id);if(x)x.active=!x.active;setProducts(p);renderAll()}
-function duplicateProduct(id){const p=getProducts(),x=p.find(a=>a.id===id);if(!x)return;p.push({...x,id:Date.now(),name:x.name+" – kópia",order:p.length+1});setProducts(p);renderAll();toast("Produkt bol duplikovaný.")}
-function deleteProduct(id){if(!confirm("Naozaj odstrániť produkt?"))return;setProducts(getProducts().filter(x=>x.id!==id));renderAll();toast("Produkt bol odstránený.")}
+$('productForm').onsubmit=async e=>{e.preventDefault();const save=e.target.querySelector('button[type="submit"]');save.disabled=true;try{
+ let imageUrl=$('productImage').value.trim()||null;const file=$('productPhoto').files[0];if(imageUrl&&!/^https:\/\//i.test(imageUrl)&&!/^assets\/[a-zA-Z0-9._/-]+$/.test(imageUrl))throw Error('Obrázok musí mať HTTPS adresu alebo cestu assets/..');
+ if(file){if(file.size>5*1024*1024)throw Error('Fotografia musí mať menej ako 5 MB.');if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Povolené sú JPG, PNG a WebP.');const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type],path=`products/${crypto.randomUUID()}.${ext}`;const {error:upErr}=await sb.storage.from('product-images').upload(path,file,{contentType:file.type,upsert:false});if(upErr)throw upErr;imageUrl=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;}
+ const entry={name:$('productName').value.trim(),type:$('productType').value.trim()||'Med',description:$('productDescription').value.trim(),price:Number($('productPrice').value),stock:Number($('productStock').value),weight:$('productWeight').value.trim(),image_url:imageUrl,active:$('productActive').checked,featured:$('productFeatured').checked,sort_order:Number($('productOrder').value)||0,updated_at:new Date().toISOString()};const id=$('productId').value;
+ const r=id?await sb.from('products').update(entry).eq('id',id):await sb.from('products').insert(entry);if(r.error)throw r.error;closeModal('adminProductModal');await renderAll();toast('Produkt uložený.');
+ }catch(err){console.error(err);toast(err.message||'Uloženie produktu zlyhalo.')}finally{save.disabled=false}};
+async function toggleProduct(id){const p=products.find(p=>p.id===id);if(!p)return;const {error}=await sb.from('products').update({active:!p.active,updated_at:new Date().toISOString()}).eq('id',id);if(error)return toast(error.message);await renderAll()}
+async function duplicateProduct(id){const p=products.find(p=>p.id===id);if(!p)return;const {id:old,created_at,updated_at,...copy}=p;copy.name+=' – kópia';copy.sort_order=products.length+1;const {error}=await sb.from('products').insert(copy);if(error)return toast(error.message);await renderAll();toast('Produkt duplikovaný.')}
+async function deleteProduct(id){if(!confirm('Naozaj chceš produkt odstrániť? História objednávok zostane zachovaná.'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)return toast(error.message);await renderAll();toast('Produkt odstránený.')}
 window.toggleProduct=toggleProduct;window.duplicateProduct=duplicateProduct;window.deleteProduct=deleteProduct;
-
-function renderOrders(){
- let list=getOrders();const q=$("orderSearch").value.trim().toLowerCase(),filter=$("orderFilter").value;
- if(q)list=list.filter(x=>`${x.id} ${x.customer} ${x.phone}`.toLowerCase().includes(q));
- if(filter!=="all")list=list.filter(x=>x.status===filter);
- const deliveryName={pickup:"Osobný odber",local:"Lokálny dovoz",other:"Dohoda"};
- $("ordersTable").innerHTML=list.map(x=>`<tr>
- <td><b>${x.id}</b></td><td>${escapeHtml(x.customer)}<br><small>${escapeHtml(x.phone||"")}</small></td><td>${money(x.total)}</td><td>${escapeHtml(x.date||"")}</td><td>${deliveryName[x.delivery]||x.delivery}</td>
- <td><select onchange="changeStatus('${x.id}',this.value)"><option value="new" ${x.status==="new"?"selected":""}>Nová</option><option value="processing" ${x.status==="processing"?"selected":""}>Spracováva sa</option><option value="ready" ${x.status==="ready"?"selected":""}>Pripravená</option><option value="done" ${x.status==="done"?"selected":""}>Vybavená</option><option value="cancelled" ${x.status==="cancelled"?"selected":""}>Zrušená</option></select></td>
- <td><button class="icon-btn" onclick="openOrder('${x.id}')">Detail</button></td></tr>`).join("")||`<tr><td colspan="7">Žiadne objednávky.</td></tr>`;
+function renderOrders(){let list=[...orders],q=$('orderSearch').value.trim().toLowerCase(),filter=$('orderFilter').value;if(q)list=list.filter(o=>(o.order_code+' '+o.customer_name+' '+o.phone).toLowerCase().includes(q));if(filter!=='all')list=list.filter(o=>o.status===filter);
+ const delivery={pickup:'Osobný odber',local:'Lokálny dovoz',other:'Dohoda'};
+ $('ordersTable').innerHTML=list.map(o=>{const pending=o.payment_type==='card'&&o.payment_status!=='paid';return `<tr><td><b>${esc(o.order_code)}</b></td><td>${esc(o.customer_name)}<br><small>${esc(o.phone||'')}</small><br><small>${esc(paymentBadge(o))}</small></td><td>${money(o.total)}</td><td>${esc(new Date(o.created_at).toLocaleString('sk-SK'))}</td><td>${delivery[o.delivery_type]||esc(o.delivery_type)}</td><td><select ${pending?'disabled':''} onchange="changeStatus('${o.id}',this.value)">${Object.entries(statusNames).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v}</option>`).join('')}</select></td><td><button class="icon-btn" onclick="openOrder('${o.id}')">Detail</button></td></tr>`}).join('')||'<tr><td colspan="7">Žiadne objednávky.</td></tr>';
 }
-$("orderSearch").oninput=renderOrders;$("orderFilter").onchange=renderOrders;
-
-function changeStatus(id,status){const o=getOrders(),x=o.find(a=>a.id===id);if(x)x.status=status;setOrders(o);renderAll();toast("Stav objednávky bol zmenený.")}
+$('orderSearch').oninput=renderOrders;$('orderFilter').onchange=renderOrders;
+async function changeStatus(id,status){const o=orders.find(o=>o.id===id);if(!o)return;if(o.payment_type==='card'&&o.payment_status!=='paid'){toast('Najprv musí byť potvrdená platba.');renderOrders();return}if(status==='cancelled'){if(o.payment_status==='paid'){toast('Pri zaplatenej objednávke treba najprv riešiť vrátenie platby v Stripe.');renderOrders();return}const r=await sb.rpc('cancel_medlove_admin_order',{p_order_id:id});if(r.error||!r.data){toast(r.error?.message||'Objednávku nemožno zrušiť.');renderOrders();return}}else{const r=await sb.from('orders').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(r.error){toast(r.error.message);renderOrders();return}}await renderAll();toast('Stav objednávky bol aktualizovaný.')}
 window.changeStatus=changeStatus;
-
-function openOrder(id){
- const x=getOrders().find(a=>a.id===id);if(!x)return;
- const deliveryName={pickup:"Osobný odber",local:"Lokálny dovoz",other:"Dohoda"};
- $("orderDetailTitle").textContent=x.id;
- $("orderDetailContent").innerHTML=`<div class="order-detail-grid">
- <div class="order-box"><h4>Zákazník</h4><p><b>${escapeHtml(x.customer)}</b></p><p>${escapeHtml(x.phone||"")}</p><p>${escapeHtml(x.email||"")}</p></div>
- <div class="order-box"><h4>Prevzatie</h4><p>${deliveryName[x.delivery]||x.delivery}</p><p>${escapeHtml(x.address||"")}</p><p>Platba: ${x.payment==="transfer"?"Bankový prevod":"Hotovosť"}</p></div>
- </div>
- <div class="order-box" style="margin-top:12px"><h4>Poznámka</h4><p>${escapeHtml(x.note||"Bez poznámky")}</p></div>
- <div style="margin-top:18px"><h4>Položky</h4>${(x.items||[]).map(i=>`<div class="order-line"><span>${i.qty} × ${escapeHtml(i.name)}</span><b>${money(i.price*i.qty)}</b></div>`).join("")}<div class="order-total"><span>Spolu</span><span>${money(x.total)}</span></div></div>`;
- $("orderDetailModal").classList.remove("hidden");document.body.classList.add("no-scroll");
-}
+function openOrder(id){const o=orders.find(o=>o.id===id);if(!o)return;$('orderDetailTitle').textContent=o.order_code;const delivery={pickup:'Osobný odber',local:'Lokálny dovoz',other:'Dohoda'};$('orderDetailContent').innerHTML=`<div class="order-detail-grid"><div class="order-box"><h4>Zákazník</h4><p><b>${esc(o.customer_name)}</b></p><p>${esc(o.phone)}</p><p>${esc(o.email||'')}</p></div><div class="order-box"><h4>Prevzatie</h4><p>${delivery[o.delivery_type]||esc(o.delivery_type)}</p><p>${esc(o.delivery_address||'')}</p><p>Platba: ${esc(paymentBadge(o))}</p></div></div><div class="order-box" style="margin-top:12px"><h4>Poznámka</h4><p>${esc(o.note||'Bez poznámky')}</p></div><div style="margin-top:18px"><h4>Položky</h4>${(o.order_items||[]).map(i=>`<div class="order-line"><span>${i.quantity} × ${esc(i.product_name)}</span><b>${money(i.line_total)}</b></div>`).join('')}<div class="order-total"><span>Spolu</span><span>${money(o.total)}</span></div></div>`;$('orderDetailModal').classList.remove('hidden');document.body.classList.add('no-scroll')}
 window.openOrder=openOrder;
-
-function renderStock(){
- const p=getProducts().sort((a,b)=>a.stock-b.stock);
- $("stockGrid").innerHTML=p.map(x=>`<article class="stock-card"><div class="stock-card-head"><div><h3>${escapeHtml(x.name)}</h3><small>${escapeHtml(x.weight||"")}</small></div><b class="${x.stock<=5?"low-stock-value":""}">${x.stock} ks</b></div><div class="stock-control"><input id="stock-${x.id}" type="number" min="0" value="${x.stock}"><button class="btn btn-primary" onclick="saveStock(${x.id})">Uložiť</button></div></article>`).join("");
-}
-function saveStock(id){const p=getProducts(),x=p.find(a=>a.id===id);if(!x)return;x.stock=Math.max(0,Number(document.getElementById("stock-"+id).value)||0);setProducts(p);renderAll();toast("Sklad bol upravený.")}
+function renderStock(){$('stockGrid').innerHTML=[...products].sort((a,b)=>a.stock-b.stock).map(p=>`<article class="stock-card"><div class="stock-card-head"><div><h3>${esc(p.name)}</h3><small>${esc(p.weight||'')}</small></div><b class="${p.stock<=5?'low-stock-value':''}">${p.stock} ks</b></div><div class="stock-control"><input id="stock-${p.id}" type="number" min="0" value="${p.stock}"><button class="btn btn-primary" onclick="saveStock('${p.id}')">Uložiť</button></div></article>`).join('')}
+async function saveStock(id){const n=Math.floor(Number($('stock-'+id).value));if(!Number.isFinite(n)||n<0)return toast('Neplatný sklad.');const {error}=await sb.from('products').update({stock:n,updated_at:new Date().toISOString()}).eq('id',id);if(error)return toast(error.message);await renderAll();toast('Sklad bol upravený.')}
 window.saveStock=saveStock;
-
-function loadSettings(){
- const s=getSettings();
- $("setShopName").value=s.shopName;$("setSubtitle").value=s.subtitle;$("setHeroTitle").value=s.heroTitle;$("setHeroText").value=s.heroText;$("setPhone").value=s.phone;$("setAddress").value=s.address;$("setFacebook").value=s.facebook;$("setDeliveryArea").value=s.deliveryArea;$("setAboutTitle").value=s.aboutTitle;$("setAboutText").value=s.aboutText;$("setFooterText").value=s.footerText;$("setFreeDeliveryQty").value=s.freeDeliveryQty;$("setAnnouncement").value=s.announcement;$("setAnnouncementActive").checked=!!s.announcementActive;
-}
-$("settingsForm").onsubmit=e=>{
- e.preventDefault();
- setSettings({shopName:$("setShopName").value.trim(),subtitle:$("setSubtitle").value.trim(),heroTitle:$("setHeroTitle").value.trim(),heroText:$("setHeroText").value.trim(),phone:$("setPhone").value.trim(),address:$("setAddress").value.trim(),facebook:$("setFacebook").value.trim(),deliveryArea:$("setDeliveryArea").value.trim(),aboutTitle:$("setAboutTitle").value.trim(),aboutText:$("setAboutText").value.trim(),footerText:$("setFooterText").value.trim(),freeDeliveryQty:Number($("setFreeDeliveryQty").value)||3,announcement:$("setAnnouncement").value.trim(),announcementActive:$("setAnnouncementActive").checked});
- renderAll();toast("Nastavenia boli uložené.");
-};
-
-$("exportBtn").onclick=()=>{
- const data={exportedAt:new Date().toISOString(),products:getProducts(),orders:getOrders(),settings:getSettings()};
- const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`medlove-zaloha-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);toast("Záloha bola pripravená.");
-};
-$("resetBtn").onclick=()=>{if(!confirm("Obnoviť pôvodné demo dáta?"))return;setProducts(DEFAULT_PRODUCTS);setOrders(DEFAULT_ORDERS);setSettings(DEFAULT_SETTINGS);renderAll();toast("Demo dáta obnovené.");};
-
-document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
-function closeModal(id){$(id).classList.add("hidden");document.body.classList.remove("no-scroll")}
+function loadSettings(){const m={setShopName:'shop_name',setSubtitle:'subtitle',setHeroTitle:'hero_title',setHeroText:'hero_text',setPhone:'phone',setAddress:'address',setFacebook:'facebook',setDeliveryArea:'delivery_area',setAboutTitle:'about_title',setAboutText:'about_text',setFooterText:'footer_text',setFreeDeliveryQty:'free_delivery_qty',setAnnouncement:'announcement'};Object.entries(m).forEach(([el,col])=>$(el).value=settings[col]??'');$('setAnnouncementActive').checked=!!settings.announcement_active}
+$('settingsForm').onsubmit=async e=>{e.preventDefault();const data={shop_name:$('setShopName').value.trim(),subtitle:$('setSubtitle').value.trim(),hero_title:$('setHeroTitle').value.trim(),hero_text:$('setHeroText').value.trim(),phone:$('setPhone').value.trim(),address:$('setAddress').value.trim(),facebook:$('setFacebook').value.trim(),delivery_area:$('setDeliveryArea').value.trim(),about_title:$('setAboutTitle').value.trim(),about_text:$('setAboutText').value.trim(),footer_text:$('setFooterText').value.trim(),free_delivery_qty:Math.max(1,Number($('setFreeDeliveryQty').value)||3),announcement:$('setAnnouncement').value.trim(),announcement_active:$('setAnnouncementActive').checked,updated_at:new Date().toISOString()};const {error}=await sb.from('shop_settings').update(data).eq('id',1);if(error)return toast(error.message);await renderAll();toast('Nastavenia uložené.')};
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({exported_at:new Date().toISOString(),products,orders,settings},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='medlove-export-'+new Date().toISOString().slice(0,10)+'.json';link.click();URL.revokeObjectURL(link.href)};
+$('resetBtn').disabled=true;document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));restoreSession();

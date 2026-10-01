@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#15130f">
+  <meta name="description" content="Medlove – Včelia farma Slnečná. Poctivý slovenský med z Likavky: kvetový, agátový, pastovaný a medovicový med.">
   <title>Medlove • Včelia farma Slnečná</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -60,36 +61,9 @@
           </div>
         </div>
 
-        <div class="hero-art">
-          <div class="sun-glow"></div>
-          <div class="flower flower-a">🌸</div>
-          <div class="flower flower-b">🌼</div>
-          <div class="flower flower-c">🌿</div>
-          <div class="bee bee-a">🐝</div>
-          <div class="bee bee-b">🐝</div>
-          <div class="jar jar-back jar-dark">
-            <div class="lid"></div>
-            <div class="glass">
-              <div class="jar-label">
-                <span>MED</span>
-                <small>medovicový</small>
-              </div>
-            </div>
-          </div>
-          <div class="jar jar-front">
-            <div class="lid"></div>
-            <div class="glass">
-              <div class="jar-label">
-                <span>MED</span>
-                <small>z Likavky</small>
-              </div>
-            </div>
-          </div>
-          <div class="hero-stamp">
-            <span>POCTIVÝ MED</span>
-            <b>PRIAMO OD</b>
-            <span>VČELÁRA</span>
-          </div>
+        <div class="hero-art photo-hero">
+          <img src="assets/medlove-products.webp" alt="Štyri poháre medu z Včelej farmy Slnečná" loading="eager">
+          <div class="photo-tag">🐝 Poctivý med z Likavky</div>
         </div>
       </div>
     </section>
@@ -327,14 +301,14 @@
             <select id="orderDelivery">
               <option value="pickup">Osobný odber – Likavka 290</option>
               <option value="local">Dovoz – Ružomberok a blízke okolie</option>
-              <option value="other">Iné miesto – dohoda</option>
+              
             </select>
           </label>
 
           <label>Platba
             <select id="orderPayment">
               <option value="cash">Hotovosť pri prevzatí</option>
-              <option value="transfer">Bankový prevod – demo</option>
+              <option value="card">Platba kartou cez Stripe</option>
             </select>
           </label>
         </div>
@@ -348,16 +322,14 @@
         </div>
 
         <button class="btn btn-primary full" type="submit">Vytvoriť objednávku</button>
-        <p class="form-note">Demo verzia – objednávka sa zatiaľ uloží iba v tomto prehliadači.</p>
+        <p class="form-note" id="checkoutNotice">Lokálny dovoz je zdarma pri objednávke aspoň 3 ks. Online platba sa otvorí na zabezpečenej stránke Stripe.</p>
       </form>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script src="supabase-config.js"></script>
-
-<script src="script.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

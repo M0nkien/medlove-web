@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#15130f">
-  <title>Admin • Medlove</title>
+  <meta name="robots" content="noindex,nofollow"><title>Admin • Medlove</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="admin-body">
@@ -19,10 +19,10 @@
 
       <form class="login-card" id="loginForm">
         <h2>Prihlásenie</h2>
-        <label>E-mail<input id="adminEmail" type="email" value="admin@medlove.sk" required></label>
+        <label>E-mail<input id="adminEmail" type="email" placeholder="E-mail administrátora" required></label>
         <label>Heslo<input id="adminPassword" type="password" required></label>
         <button class="btn btn-primary full" type="submit">Prihlásiť sa</button>
-        <p class="demo-note">Demo: <b>admin@medlove.sk</b> / <b>med123</b></p>
+        <p class="demo-note">Prihlás sa účtom administrátora vytvoreným v Supabase.</p>
         <a href="index.html" class="back-link">← Späť na web</a>
       </form>
     </div>
@@ -71,7 +71,7 @@
             <article><span>Produkty</span><b id="statProducts">0</b><small>v katalógu</small></article>
             <article><span>Objednávky</span><b id="statOrders">0</b><small>celkom</small></article>
             <article><span>Nové</span><b id="statNew">0</b><small>na vybavenie</small></article>
-            <article><span>Tržby</span><b id="statRevenue">0 €</b><small>bez zrušených</small></article>
+            <article><span>Tržby</span><b id="statRevenue">0 €</b><small>vybavené objednávky</small></article>
           </div>
 
           <div class="dashboard-grid">
@@ -229,9 +229,9 @@
             </article>
 
             <article class="admin-card">
-              <h3>Obnoviť demo</h3>
-              <p>Prepíše aktuálne lokálne dáta pôvodnou verziou Medlove.</p>
-              <button class="btn btn-danger" id="resetBtn">Obnoviť demo dáta</button>
+              <h3>Obnova dát</h3>
+              <p>V produkcii databázu automaticky nemažeme. Obnova sa vykonáva z overenej databázovej zálohy.</p>
+              <button class="btn btn-danger" id="resetBtn">Obnova dát dáta</button>
             </article>
           </div>
         </section>
@@ -257,8 +257,9 @@
         </div>
         <div class="form-grid">
           <label>Balenie<input id="productWeight" value="950 g"></label>
-          <label>Emoji / URL obrázka<input id="productImage" placeholder="🌼 alebo https://..."></label>
+          <label>URL obrázka (voliteľné)<input id="productImage" placeholder="https://..."></label>
         </div>
+        <label>Fotografia produktu (max. 5 MB)<input id="productPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
         <label>Popis<textarea id="productDescription" rows="4"></textarea></label>
         <div class="form-grid">
           <label>Poradie<input id="productOrder" type="number" min="0"></label>
@@ -281,9 +282,7 @@
 
   <div class="toast" id="toast"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script src="supabase-config.js"></script>
-
-<script src="admin.js"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
