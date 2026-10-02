@@ -1,5 +1,19 @@
 // Medlove V5 admin: Supabase Auth + RLS + Supabase Storage.
-const c=window.MEDLOVE_CONFIG,sb=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey);
+const c=window.MEDLOVE_CONFIG;
+// The admin session is private to this browser session, not persistent localStorage.
+try{
+ const projectRef=new URL(c.supabaseUrl).hostname.split('.')[0];
+ localStorage.removeItem('sb-'+projectRef+'-auth-token');
+}catch(err){console.warn('Starú reláciu sa nepodarilo vyčistiť.')}
+const sb=window.supabase.createClient(c.supabaseUrl,c.supabasePublishableKey,{
+ auth:{
+  storage:window.sessionStorage,
+  storageKey:'medlove-admin-session',
+  persistSession:true,
+  autoRefreshToken:true,
+  detectSessionInUrl:false
+ }
+});
 const $=id=>document.getElementById(id);
 const money=x=>Number(x).toLocaleString('sk-SK',{style:'currency',currency:'EUR'});
 const esc=x=>String(x??'').replace(/[&<>"']/g,z=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[z]));

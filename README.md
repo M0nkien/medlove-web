@@ -111,3 +111,12 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - **Zmenené súbory:** `server/server.js`, `public/script.js`, `public/index.html`, `public/admin.js`, `public/admin.html`, `public/style.css`, `netlify.toml`, `README.md`.
 - **Nasadenie:** GitHub `main` → Netlify; Render → Deploy latest commit, ak sa automaticky nenasadí. Overiť `/api/health` verziu `6.4.0`, admin odhlásenie, opätovné načítanie ponuky a kartovú platbu v TEST režime.
 - **Zostávajúce bezpečnostné kroky:** Supabase MFA pre admina, rozumné nastavenie relácií, pravidelné databázové zálohy, kontrola závislostí a nasadenie prísnej CSP po refaktoringu inline handlerov.
+
+## V6.5 – ďalšie bezpečnostné sprísnenie
+- Obchod používa iba anonymný Supabase klient bez pretrvávajúcej Auth relácie.
+- Admin používa sessionStorage namiesto localStorage a vyčistí starý lokálny token. Po nasadení sa administrátor musí znova prihlásiť; MFA a serverová expirácia zostávajú samostatné opatrenia.
+- Objednávkové API odmieta cudzie CORS preflight požiadavky, požiadavky bez JSON Content-Type, nesprávne UUID produktov a duplicitné položky. Stripe raw webhook zostáva nezmenený.
+- Netlify vynucuje základné bezpečné CSP direktívy base-uri, frame-ancestors, object-src, form-action. Plnú script-src aktivujeme až po bezpečnom odstránení inline handlerov.
+- Migrácia sql/003_medlove_security.sql odoberá anonymovi tabuľkové práva na objednávky a obmedzuje priamy admin zápis na status a updated_at. Serverové Stripe operácie zostávajú pod service_role.
+- Zmenené: public/admin.js, public/script.js, server/server.js, server/package.json, netlify.toml, README.md; nové sql/003_medlove_security.sql.
+- Over po nasadení: opätovné prihlásenie admina, načítanie objednávok, zmenu stavu, hotovostnú objednávku a Stripe TEST platbu.

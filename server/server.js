@@ -29,7 +29,10 @@ app.use((req,res,next)=>{
  if(req.path.startsWith('/api/orders/'))res.setHeader('Cache-Control','no-store');
  if(req.method==='GET'&&req.path.startsWith('/api/orders/')&&req.headers.origin&&req.headers.origin!==frontendUrl)
    return res.status(403).json({error:'Nepovolený pôvod požiadavky.'});
- if(req.method==='OPTIONS')return res.sendStatus(204);
+ if(req.method==='OPTIONS')
+  return req.headers.origin===frontendUrl?res.sendStatus(204):res.sendStatus(403);
+ if(req.method==='POST'&&req.path==='/api/orders'&&!req.is('application/json'))
+  return res.status(415).json({error:'Objednávka musí byť odoslaná vo formáte JSON.'});
  if(req.method==='POST'&&req.path!=='/api/stripe/webhook'&&req.headers.origin!==frontendUrl)
    return res.status(403).json({error:'Nepovolený pôvod požiadavky.'});
  next();
@@ -127,7 +130,7 @@ app.get('/api/orders/:code/payment-status',paymentStatusLimit,async(req,res)=>{
  }
 });
 
-app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.4.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
+app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.5.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
 
 const orderLimit=rateLimit({windowMs:30*60*1000,max:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Príliš veľa pokusov. Skús to o chvíľu.'}});
 app.post('/api/orders',orderLimit,async(req,res)=>{
@@ -137,8 +140,10 @@ app.post('/api/orders',orderLimit,async(req,res)=>{
   if(!Array.isArray(b.items)||!b.items.length||b.items.length>30)
    return res.status(400).json({error:'Neplatný košík.'});
   const items=b.items.map(i=>({product_id:String(i.product_id||''),qty:Number(i.qty)}));
-  if(items.some(i=>!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(i.product_id)||!Number.isInteger(i.qty)||i.qty<1||i.qty>20))
+  if(items.some(i=>!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(i.product_id)||!Number.isInteger(i.qty)||i.qty<1||i.qty>20))
    return res.status(400).json({error:'Neplatné množstvo alebo produkt.'});
+  if(new Set(items.map(i=>i.product_id.toLowerCase())).size!==items.length)
+   return res.status(400).json({error:'Rovnaký produkt nesmie byť v objednávke viackrát.'});
   const name=String(b.customer_name||'').trim(),phone=String(b.phone||'').trim(),email=String(b.email||'').trim(),address=String(b.delivery_address||'').trim(),note=String(b.note||'').trim();
   const delivery=b.delivery_type,payment=b.payment_type;
   if(name.length<2||name.length>120||phone.length<6||phone.length>30||email.length>254||address.length>400||note.length>1000)

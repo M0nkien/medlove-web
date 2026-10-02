@@ -1,7 +1,10 @@
 // Medlove V6 — produkty a nastavenia sa načítavajú zo Supabase.
 // Košík je lokálny. Objednávku, cenu a zásoby overuje iba backend na Renderi.
 const cfg=window.MEDLOVE_CONFIG;
-const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey);
+// Public storefront requires no authenticated or persistent Supabase session.
+const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{
+ auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+});
 const $=id=>document.getElementById(id);
 const money=v=>Number(v).toLocaleString('sk-SK',{style:'currency',currency:'EUR'});
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
