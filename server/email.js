@@ -42,7 +42,7 @@ function createNotifier(db,env=process.env){
  async function notify(orderId){
   if(!enabled)return;
   const {data:order,error}=await db.from('orders')
-   .select('id,created_at,order_code,customer_name,phone,email,delivery_type,delivery_address,note,payment_type,payment_status,total,status')
+   .select('id,created_at,order_code,tracking_token,customer_name,phone,email,delivery_type,delivery_address,note,payment_type,payment_status,total,status')
    .eq('id',orderId).maybeSingle();
   if(error)throw error;
   if(!order||order.status==='cancelled'||Date.parse(order.created_at)<cutoff)return;
@@ -55,6 +55,10 @@ function createNotifier(db,env=process.env){
   const detailHtml=items.map(i=>'<li>'+escapeHtml(i.product_name)+' × '+i.quantity+' — '+escapeHtml(eur(i.line_total))+'</li>').join('');
   const delivery=order.delivery_type==='local'?'Lokálny dovoz':'Osobný odber';
   const payment=order.payment_type==='card'?'Zaplatené kartou':'Hotovosť pri prevzatí';
+  const privateLink=order.tracking_token&&env.FRONTEND_URL?
+   env.FRONTEND_URL.replace(/\/$/,'')+'/sledovanie.html?token='+order.tracking_token:null;
+  const trackingText=privateLink?'Súkromné sledovanie objednávky: '+privateLink:'';
+  const trackingHtml=privateLink?'<p><a href="'+escapeHtml(privateLink)+'">Sledovať objednávku</a></p>':'';
   const destinations=[];
   if(validEmail(order.email)&&env.ENABLE_CUSTOMER_EMAILS!=='false')
    destinations.push({kind:'customer',to:order.email,subject:'Medlove: potvrdenie objednávky '+order.order_code,

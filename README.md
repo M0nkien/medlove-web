@@ -137,3 +137,13 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Mobil: rozloženie filtrov a tlačidiel v admin paneli.
 - Zmenené súbory: `public/admin.html`, `public/admin.js`, `public/style.css`, `README.md`. Bez databázovej migrácie, bez zmien Renderu a Stripe.
 - Nasadenie: Netlify automaticky z GitHub `main`; po nasadení otestuj filtrovanie upozornení, úpravu názvu fotografie a skrytie/zverejnenie fotografie.
+
+## Medlove V7.2 – Kanban, história, sledovanie, naskladnenie a mobilný e-shop
+- **Kanban:** v admin paneli pribudli štyri stĺpce Nové / Spracovávajú sa / Pripravené / Vybavené. Karty možno presúvať myšou aj ovládať cez select. Nezaplatené kartové objednávky sa nedajú presúvať; zrušenie a vrátenie peňazí ostávajú podľa pôvodných bezpečných pravidiel.
+- **História objednávky:** databázové triggery zapisujú vytvorenie, zmeny stavu a potvrdenie/zlyhanie platby. Admin v detaile vidí dátum a identifikátor administrátora alebo systém. Predošlé neexistujúce historické zmeny nevymýšľame.
+- **Súkromné sledovanie:** nové `public/sledovanie.html` a `public/tracking.js` s vysoko náhodným tokenom. Server `GET /api/track/:token` vracia len bezpečný stav a časovú os, nikdy meno, telefón ani adresu. Odkaz sa zobrazuje po hotovostnej objednávke, po Stripe návrate a v zákazníckom e-maile iba po aktivácii mailera. Odkaz je súkromný prístupový údaj, nevystavovať ho verejne.
+- **Jednorazové upozornenie na naskladnenie:** nová `public/restock` modalita a `server/restock.js`. Pri vypredanom mede sa možnosť objaví len vtedy, ak Render API potvrdí `restockConfigured=true` (Resend key + verified EMAIL_FROM). Bez toho sa žiadne e-mailové prihlásenia neprijímajú. Pri naskladnení pracovník kontroluje front raz za 10 minút a odosiela jednorazové správy; používateľ musí zaškrtnúť výslovný súhlas. Pred ostrým spustením dokončiť zásady práce s e-mailmi a vyskúšať odosielanie.
+- **Produktové fotografie:** `public.product_photos` a správa ďalších obrázkov cez admin. Po kliknutí na produkt sa zobrazia miniatúry s možnosťou prepnutia hlavnej fotografie.
+- **Vzhľad:** výraznejšie úvodné tlačidlo, spodná mobilná navigácia, animácia košíka, aktuálna sekcia v navigácii a kontrastnejšie texty v tmavom režime. Podporuje `prefers-reduced-motion`.
+- **Migrácie:** `sql/005_medlove_tracking_history_restock.sql` a `sql/006_medlove_product_photos.sql`; obe už boli vykonané v Supabase. Nespúšťaj staré zakladacie skripty.
+- **Nasadenie:** GitHub main → Netlify; Render musí nasadiť novú verziu servera `7.2.0`. Over Kanban, audit udalosti po zmene stavu, sledovanie cez súkromný odkaz, výpadky API, extra obrázky a Stripe testovacie dokončenie platby. E-maily na naskladnenie vyžadujú aktivovanú Resend službu a otestovanie na kontrolovanom e-maile.

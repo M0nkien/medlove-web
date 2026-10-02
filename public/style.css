@@ -392,3 +392,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .orders-kanban-board{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.cart-btn.cart-bump span{animation:none}.photo-hero img{transition:none}}
+
+/* V7.2: kontrast informačných prvkov v tmavom režime. */
+:root[data-theme="dark"] .eyebrow,:root[data-theme="dark"] .micro-label,:root[data-theme="dark"] .product-type{color:var(--honey2)}
+:root[data-theme="dark"] .stock.low,:root[data-theme="dark"] .low-stock-value{color:#ffd16d}
+:root[data-theme="dark"] .stock.out{color:#ffaaa0}
+:root[data-theme="dark"] #mainNav a[aria-current="location"]{color:var(--honey2)}
+#mainNav a[aria-current="location"]{color:var(--honey2);text-decoration:underline;text-underline-offset:5px}
