@@ -130,3 +130,10 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Migrácia `sql/004_medlove_gallery.sql` bola aplikovaná na Supabase projekt Medlove, existujúce objednávky a produkty zostali nedotknuté.
 - Nasadenie: GitHub `main` → Netlify publish `public`. Nepotrebuje aktualizáciu Render backendu. Otestuj oba režimy, admin načítanie, upozornenia, nahratie reálnej fotografie, zverejnenie/skrytie a verejnú galériu.
 - Úpravy: `public/index.html`, `public/admin.html`, `public/admin.js`, `public/style.css`, informačné HTML stránky a `README.md`; nové `public/gallery.js`, `public/theme.js`, `sql/004_medlove_gallery.sql`.
+
+## Medlove V7.1 – každodenná správa galérie a upozornení
+- Admin: upozornenia možno filtrovať na nové objednávky, čakajúce platby a nízky sklad; zobrazuje sa čas posledného úspešného obnovenia. Dashboard zobrazuje všetky dôležité udalosti bez ohľadu na filter.
+- Galéria: filter Všetky / Zverejnené / Skryté, počet fotografií, úprava popisu, kategórie a poradia bez opätovného nahrávania obrázka. Oprávnenia stále kontroluje Supabase RLS.
+- Mobil: rozloženie filtrov a tlačidiel v admin paneli.
+- Zmenené súbory: `public/admin.html`, `public/admin.js`, `public/style.css`, `README.md`. Bez databázovej migrácie, bez zmien Renderu a Stripe.
+- Nasadenie: Netlify automaticky z GitHub `main`; po nasadení otestuj filtrovanie upozornení, úpravu názvu fotografie a skrytie/zverejnenie fotografie.

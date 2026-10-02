@@ -332,3 +332,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .admin-actions .btn{padding:9px 10px}
  .admin-brand small{display:none}
 }
+
+/* Medlove V7.1: filtre upozornení, upravovanie fotografií a čitateľný admin na mobile. */
+.notification-toolbar{align-items:center;justify-content:space-between;margin-bottom:15px}
+.notifications-updated,.gallery-count{color:var(--muted);font-size:.82rem}
+.gallery-toolbar{align-items:center;justify-content:space-between;margin:18px 0 0}
+.gallery-edit-form{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.gallery-edit-form[hidden]{display:none}
+.gallery-edit-form label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:700}
+.gallery-edit-form input,.gallery-edit-form select{width:100%;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+.gallery-edit-form button{align-self:stretch}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:760px){.notification-toolbar{align-items:stretch}.notification-toolbar select{width:100%}.gallery-toolbar{align-items:center}.admin-gallery-actions .btn{flex:1}}

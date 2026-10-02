@@ -116,7 +116,18 @@
           <div class="admin-page-head"><div><span class="eyebrow">Prehľad</span><h1>Centrum upozornení</h1>
             <p>Nové objednávky, platby čakajúce na potvrdenie a nízke zásoby. Údaje sa obnovujú počas otvorenej administrácie.</p></div>
             <button id="refreshNotifications" class="btn btn-secondary" type="button">↻ Obnoviť</button></div>
-          <article class="admin-card"><div id="notificationList" class="notification-list" aria-live="polite"></div></article>
+          <article class="admin-card">
+            <div class="admin-toolbar notification-toolbar">
+              <label for="notificationFilter" class="visually-hidden">Filtrovať upozornenia</label>
+              <select id="notificationFilter" aria-label="Typ upozornení">
+                <option value="all">Všetky upozornenia</option>
+                <option value="new">Nové objednávky</option>
+                <option value="pending">Čakajúce platby</option>
+                <option value="stock">Nízke zásoby a vypredané</option>
+              </select>
+              <small id="notificationsUpdated" class="notifications-updated" role="status">Údaje sa načítavajú…</small>
+            </div>
+            <div id="notificationList" class="notification-list" aria-live="polite"></div></article>
         </section>
 
         <section class="admin-page" id="products">
@@ -216,6 +227,15 @@
               <button type="submit" class="btn btn-primary">Pridať fotografiu</button>
             </form>
           </article>
+          <div class="admin-toolbar gallery-toolbar">
+            <label for="adminGalleryFilter" class="visually-hidden">Filtrovať galériu</label>
+            <select id="adminGalleryFilter" aria-label="Stav fotografií">
+              <option value="all">Všetky fotografie</option>
+              <option value="published">Zverejnené</option>
+              <option value="hidden">Skryté</option>
+            </select>
+            <span id="galleryPhotoCount" class="gallery-count"></span>
+          </div>
           <div id="adminGalleryGrid" class="admin-gallery-grid" aria-live="polite"><p>Načítavame galériu…</p></div>
         </section>
 

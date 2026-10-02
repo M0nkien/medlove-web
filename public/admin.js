@@ -47,7 +47,7 @@ async function renderAll(){
  const [a,b,d]=await Promise.all([sb.from('products').select('*').order('sort_order'),sb.from('orders').select('*,order_items(*)').order('created_at',{ascending:false}),sb.from('shop_settings').select('*').eq('id',1).single()]);
  if(a.error||b.error||d.error){const err=a.error||b.error||d.error;console.error(err);toast('Načítanie dát zlyhalo: '+err.message);return}
  products=a.data||[];orders=b.data||[];settings=d.data||{};$('adminBrandName').textContent=settings.shop_name||'Medlove';$('productCountSide').textContent=products.length;$('orderCountSide').textContent=orders.filter(o=>o.status==='new'&&(o.payment_type!=='card'||o.payment_status==='paid')).length;
- renderDashboard();renderProducts();renderOrders();renderStock();loadSettings();renderNotifications();await loadGalleryAdmin();
+ renderDashboard();renderProducts();renderOrders();renderStock();loadSettings();renderNotifications();markNotificationsUpdated();await loadGalleryAdmin();
 }
 function renderDashboard(){const available=orders.filter(o=>o.status==='new'&&(o.payment_type!=='card'||o.payment_status==='paid'));
  $('statProducts').textContent=products.length;$('statOrders').textContent=orders.length;$('statNew').textContent=available.length;$('statRevenue').textContent=money(orders.filter(o=>o.status==='done').reduce((s,o)=>s+Number(o.total),0));
@@ -129,20 +129,27 @@ function alertElement(alert){
 }
 function renderNotifications(){
  const alerts=getAdminAlerts();
+ const filter=$('notificationFilter').value;
+ const filtered=filter==='all'?alerts:alerts.filter(alert=>filter==='stock'?['low','critical'].includes(alert.level):alert.level===filter);
  $('headerNotificationCount').textContent=alerts.length;
  $('notificationCountSide').textContent=alerts.length;
  $('headerNotifications').setAttribute('aria-label','Centrum upozornení: '+alerts.length+' položiek');
  for(const [target,limit] of [[$('notificationList'),50],[$('dashboardNotifications'),4]]){
+  const shown=target===$('notificationList')?filtered:alerts;
   target.replaceChildren();
-  if(!alerts.length){
+  if(!shown.length){
    const empty=document.createElement('p');empty.className='notification-empty';
-   empty.textContent='✓ Žiadne upozornenia. Objednávky a zásoby nevyžadujú pozornosť.';
+   empty.textContent=alerts.length?'V zvolenej kategórii nie sú žiadne upozornenia.':'✓ Žiadne upozornenia. Objednávky a zásoby nevyžadujú pozornosť.';
    target.append(empty);continue;
   }
-  alerts.slice(0,limit).forEach(alert=>target.append(alertElement(alert)));
+  shown.slice(0,limit).forEach(alert=>target.append(alertElement(alert)));
  }
 }
 $('headerNotifications').addEventListener('click',()=>switchPage('notifications'));
+$('notificationFilter').addEventListener('change',renderNotifications);
+function markNotificationsUpdated(){
+ $('notificationsUpdated').textContent='Posledné obnovenie: '+new Date().toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'});
+}
 let alertsRefreshing=false;
 async function refreshAdminAlerts(){
  if(alertsRefreshing||!adminReady||document.hidden)return;
@@ -156,7 +163,7 @@ async function refreshAdminAlerts(){
   products=a.data||[];orders=b.data||[];
   $('productCountSide').textContent=products.length;
   $('orderCountSide').textContent=orders.filter(o=>o.status==='new'&&(o.payment_type!=='card'||o.payment_status==='paid')).length;
-  renderDashboard();renderNotifications();
+  renderDashboard();renderNotifications();markNotificationsUpdated();
   if($('orders').classList.contains('active'))renderOrders();
   if($('stock').classList.contains('active'))renderStock();
  }catch(error){console.warn('Obnovenie upozornení zlyhalo:',error.message);toast('Upozornenia sa nepodarilo obnoviť.')}
@@ -173,13 +180,16 @@ async function loadGalleryAdmin(){
    .order('sort_order',{ascending:true}).order('created_at',{ascending:false}).limit(100);
  if(result.error){console.warn('Galéria:',result.error.message);toast('Fotogalériu sa nepodarilo načítať.');return}
  farmPhotos=result.data||[];
+ $('galleryPhotoCount').textContent=farmPhotos.length+' fotografií celkom';
+ const filter=$('adminGalleryFilter').value;
+ const visiblePhotos=farmPhotos.filter(photo=>filter==='all'||(filter==='published'&&photo.published)||(filter==='hidden'&&!photo.published));
  const grid=$('adminGalleryGrid');grid.replaceChildren();
- if(!farmPhotos.length){
+ if(!visiblePhotos.length){
   const empty=document.createElement('p');empty.className='gallery-admin-empty';
-  empty.textContent='Zatiaľ tu nie sú fotografie. Nahraj skutočné zábery farmy cez formulár vyššie.';
+  empty.textContent=farmPhotos.length?'V tomto filtri nie sú fotografie.':'Zatiaľ tu nie sú fotografie. Nahraj skutočné zábery farmy cez formulár vyššie.';
   grid.append(empty);return;
  }
- farmPhotos.forEach(photo=>{
+ visiblePhotos.forEach(photo=>{
   const card=document.createElement('article');card.className='admin-gallery-card';
   const img=document.createElement('img');
   img.src=galleryBucket.getPublicUrl(photo.storage_path).data.publicUrl;
@@ -187,7 +197,41 @@ async function loadGalleryAdmin(){
   const body=document.createElement('div');body.className='admin-gallery-card-body';
   const title=document.createElement('strong');title.textContent=photo.caption||photo.category;
   const info=document.createElement('small');info.textContent=photo.category+' · '+(photo.published?'Zverejnené':'Skryté');
+  const edit=document.createElement('form');edit.className='gallery-edit-form';edit.hidden=true;
+  const editLabel=document.createElement('label');editLabel.textContent='Popis';
+  const captionInput=document.createElement('input');captionInput.name='caption';captionInput.maxLength=200;captionInput.value=photo.caption||'';
+  editLabel.append(captionInput);
+  const categoryLabel=document.createElement('label');categoryLabel.textContent='Kategória';
+  const categorySelect=document.createElement('select');categorySelect.name='category';
+  ['Zo života farmy','Úle','Zber medu','Balenie'].forEach(category=>{
+   const option=document.createElement('option');option.value=category;option.textContent=category;
+   option.selected=photo.category===category;categorySelect.append(option);
+  });
+  categoryLabel.append(categorySelect);
+  const orderLabel=document.createElement('label');orderLabel.textContent='Poradie';
+  const orderInput=document.createElement('input');orderInput.type='number';orderInput.min='0';
+  orderInput.step='1';orderInput.name='order';orderInput.value=String(photo.sort_order||0);orderLabel.append(orderInput);
+  const saveEdit=document.createElement('button');saveEdit.type='submit';saveEdit.className='btn btn-primary';saveEdit.textContent='Uložiť úpravy';
+  const cancelEdit=document.createElement('button');cancelEdit.type='button';cancelEdit.className='btn btn-secondary';cancelEdit.textContent='Zrušiť';
+  cancelEdit.addEventListener('click',()=>{edit.hidden=true;editButton.setAttribute('aria-expanded','false')});
+  edit.append(editLabel,categoryLabel,orderLabel,saveEdit,cancelEdit);
+  edit.addEventListener('submit',async event=>{
+   event.preventDefault();const nextOrder=Number(orderInput.value);
+   if(!Number.isInteger(nextOrder)||nextOrder<0){toast('Poradie musí byť nezáporné celé číslo.');return}
+   saveEdit.disabled=true;
+   try{
+    const result=await sb.from('farm_gallery').update({
+     caption:captionInput.value.trim().slice(0,200),category:categorySelect.value,
+     sort_order:nextOrder,updated_at:new Date().toISOString()
+    }).eq('id',photo.id);
+    if(result.error)throw result.error;
+    await loadGalleryAdmin();toast('Údaje fotografie boli uložené.');
+   }catch(error){toast(error.message||'Úpravu sa nepodarilo uložiť.')}
+   finally{saveEdit.disabled=false}
+  });
   const actions=document.createElement('div');actions.className='admin-gallery-actions';
+  const editButton=document.createElement('button');editButton.type='button';editButton.className='btn btn-secondary';editButton.textContent='Upraviť';editButton.setAttribute('aria-expanded','false');
+  editButton.addEventListener('click',()=>{edit.hidden=!edit.hidden;editButton.setAttribute('aria-expanded',String(!edit.hidden));if(!edit.hidden)captionInput.focus()});
   const toggle=document.createElement('button');toggle.type='button';toggle.className='btn btn-secondary';
   toggle.textContent=photo.published?'Skryť':'Zverejniť';
   toggle.addEventListener('click',async()=>{
@@ -213,9 +257,19 @@ async function loadGalleryAdmin(){
     await loadGalleryAdmin();toast('Fotografia odstránená z galérie.');
    }catch(error){toast(error.message)}finally{remove.disabled=false}
   });
-  actions.append(toggle,remove);body.append(title,info,actions);card.append(img,body);grid.append(card);
+  actions.append(editButton,toggle,remove);body.append(title,info,actions,edit);card.append(img,body);grid.append(card);
  });
 }
+$('adminGalleryFilter').addEventListener('change',()=>{
+ const active=document.activeElement;
+ // Local rendering uses already-loaded data, no additional database request.
+ const filter=$('adminGalleryFilter').value;
+ const cards=$('adminGalleryGrid');cards.replaceChildren();
+ const filtered=farmPhotos.filter(photo=>filter==='all'||(filter==='published'&&photo.published)||(filter==='hidden'&&!photo.published));
+ if(!filtered.length){const empty=document.createElement('p');empty.className='gallery-admin-empty';empty.textContent='V tomto filtri nie sú fotografie.';cards.append(empty);return}
+ // Reuse the normal gallery renderer without changing records or upload state.
+ void loadGalleryAdmin();
+});
 $('galleryForm').addEventListener('submit',async event=>{
  event.preventDefault();
  const submit=event.target.querySelector('button[type="submit"]');
