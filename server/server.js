@@ -23,6 +23,12 @@ app.use((req,res,next)=>{
  res.setHeader('Access-Control-Allow-Headers','Content-Type');
  res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
  res.setHeader('X-Content-Type-Options','nosniff');
+ res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
+ res.setHeader('X-Frame-Options','DENY');
+ res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+ if(req.path.startsWith('/api/orders/'))res.setHeader('Cache-Control','no-store');
+ if(req.method==='GET'&&req.path.startsWith('/api/orders/')&&req.headers.origin&&req.headers.origin!==frontendUrl)
+   return res.status(403).json({error:'Nepovolený pôvod požiadavky.'});
  if(req.method==='OPTIONS')return res.sendStatus(204);
  if(req.method==='POST'&&req.path!=='/api/stripe/webhook'&&req.headers.origin!==frontendUrl)
    return res.status(403).json({error:'Nepovolený pôvod požiadavky.'});
@@ -121,7 +127,7 @@ app.get('/api/orders/:code/payment-status',paymentStatusLimit,async(req,res)=>{
  }
 });
 
-app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.2.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
+app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.4.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
 
 const orderLimit=rateLimit({windowMs:30*60*1000,max:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Príliš veľa pokusov. Skús to o chvíľu.'}});
 app.post('/api/orders',orderLimit,async(req,res)=>{

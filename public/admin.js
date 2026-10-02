@@ -6,10 +6,23 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,z=>({'&':'&amp;','<':'&lt;','>':'&
 const statusNames={new:'Nová',processing:'Spracováva sa',ready:'Pripravená',done:'Vybavená',cancelled:'Zrušená'};
 const paymentNames={pending:'Čaká na platbu',paid:'Zaplatené',unpaid:'Pri prevzatí',failed:'Platba zlyhala',refunded:'Vrátené'};
 let products=[],orders=[],settings={},adminReady=false;
+let lastAdminActivity=Date.now();
+const ADMIN_IDLE_LIMIT_MS=30*60*1000;
+async function lockInactiveAdmin(){
+ if(!adminReady||Date.now()-lastAdminActivity<ADMIN_IDLE_LIMIT_MS)return;
+ adminReady=false;
+ await sb.auth.signOut();
+ location.reload();
+}
+['pointerdown','keydown','touchstart'].forEach(type=>document.addEventListener(type,()=>{
+ if(adminReady&&Date.now()-lastAdminActivity<ADMIN_IDLE_LIMIT_MS)lastAdminActivity=Date.now();
+},{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void lockInactiveAdmin()});
+setInterval(()=>void lockInactiveAdmin(),60000);
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function statusPill(x){return `<span class="status-pill status-${x}">${statusNames[x]||esc(x)}</span>`}
 function paymentBadge(o){return o.payment_type==='card'?paymentNames[o.payment_status]||o.payment_status:'Hotovosť pri prevzatí'}
-async function showApp(){adminReady=true;$('loginScreen').classList.add('hidden');$('adminApp').classList.remove('hidden');await renderAll()}
+async function showApp(){lastAdminActivity=Date.now();adminReady=true;$('loginScreen').classList.add('hidden');$('adminApp').classList.remove('hidden');await renderAll()}
 async function checkAdmin(){const r=await sb.rpc('is_admin');if(r.error)throw r.error;return r.data===true}
 $('loginForm').onsubmit=async e=>{e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:$('adminEmail').value.trim(),password:$('adminPassword').value});if(error)throw error;if(!await checkAdmin()){await sb.auth.signOut();throw Error('Používateľ nemá admin oprávnenia.')}await showApp()}catch(err){console.error(err);toast(err.message||'Prihlásenie zlyhalo.')}finally{submit.disabled=false}};
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload()};

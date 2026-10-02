@@ -19,10 +19,10 @@
 
       <form class="login-card" id="loginForm">
         <h2>Prihlásenie</h2>
-        <label>E-mail<input id="adminEmail" type="email" placeholder="E-mail administrátora" required></label>
-        <label>Heslo<input id="adminPassword" type="password" required></label>
+        <label>E-mail<input id="adminEmail" type="email" autocomplete="username" placeholder="E-mail administrátora" required></label>
+        <label>Heslo<input id="adminPassword" type="password" autocomplete="current-password" required></label>
         <button class="btn btn-primary full" type="submit">Prihlásiť sa</button>
-        <p class="demo-note">Prihlás sa účtom administrátora vytvoreným v Supabase.</p>
+        <p class="demo-note">Prihlás sa účtom administrátora vytvoreným v Supabase. Po 30 minútach nečinnosti sa administrácia automaticky odhlási.</p>
         <a href="index.html" class="back-link">← Späť na web</a>
       </form>
     </div>

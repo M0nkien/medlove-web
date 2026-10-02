@@ -101,3 +101,13 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Mobilné ovládanie, klávesnicové zvýraznenie a dopĺňanie údajov v objednávke boli vylepšené.
 - Právne texty sa **nezverejnili**: stále potrebujú skutočné údaje prevádzkovateľa a kontrolu. Nezverejňovať obchod na ostrý predaj, kým tieto podklady nie sú hotové.
 - Nasadenie: GitHub main; Netlify publish `public`. Testuj osobitne hotovostnú objednávku, stav platieb v admin paneli a mobil.
+
+## V6.4 – bezpečnosť a používateľské vylepšenia
+- **Server:** `server/server.js` má hlavičky proti vloženiu stránky do rámca, obmedzenie nepotrebných oprávnení, `no-store` pre údaje objednávok a kontrolu cudzieho Origin na API stavu objednávky. Limit požiadaviek, kontrola ceny a overovanie Stripe ostali zachované.
+- **Netlify:** bezpečnostné hlavičky, HSTS, `no-store` a `noindex` pre admin a potvrdzovacie stránky. Pokročilú Content-Security-Policy zatiaľ nezapínaj bez odstránenia zostávajúcich inline obslužných funkcií a ich testovania.
+- **Obchod:** poškodený košík v prehliadači už nezablokuje načítanie webu; nové chybové hlásenie umožňuje načítať produkty znova; Escape zatvorí otvorený košík alebo modálne okno; upozornenie pri výpadku pri odoslaní objednávky znižuje riziko duplicitnej objednávky.
+- **Admin:** po 30 minútach nečinnosti otvorenej administrácie sa relácia odhlási; prihlásenie má správne autocomplete. Toto nie je náhradou za MFA ani za nastavenie expirácie relácií na strane Supabase.
+- **Dizajn:** minimálne rozmery mobilných ovládacích prvkov, podpora reduced motion, prístupnejšie oznamy a stav načítania.
+- **Zmenené súbory:** `server/server.js`, `public/script.js`, `public/index.html`, `public/admin.js`, `public/admin.html`, `public/style.css`, `netlify.toml`, `README.md`.
+- **Nasadenie:** GitHub `main` → Netlify; Render → Deploy latest commit, ak sa automaticky nenasadí. Overiť `/api/health` verziu `6.4.0`, admin odhlásenie, opätovné načítanie ponuky a kartovú platbu v TEST režime.
+- **Zostávajúce bezpečnostné kroky:** Supabase MFA pre admina, rozumné nastavenie relácií, pravidelné databázové zálohy, kontrola závislostí a nasadenie prísnej CSP po refaktoringu inline handlerov.

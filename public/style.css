@@ -241,3 +241,17 @@ footer{background:var(--dark);color:white;padding:56px 0 20px}
 .footer-pending{display:block;color:var(--muted);line-height:1.8;font-size:.9rem}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #a56f16;outline-offset:3px}
 @media(max-width:520px){.admin-toolbar{flex-wrap:wrap}.admin-toolbar select{min-width:160px}.cart-drawer{max-width:100vw}}
+
+/* V6.4: čitateľnejší mobil, načítavanie a klávesnicové ovládanie. */
+.catalog-loading,.catalog-error{grid-column:1/-1;padding:38px 24px;background:var(--paper);border:1px solid var(--line);border-radius:20px;color:var(--muted);text-align:center}
+.catalog-error h3{color:var(--dark);margin-top:0}
+.catalog-error button{margin-top:12px}
+@media(max-width:760px){
+  .cart-btn{min-height:44px}
+  .product-actions button{min-width:44px;min-height:44px}
+  .modal-card{max-height:calc(100dvh - 30px);overflow-y:auto}
+  .cart-drawer{height:100dvh;height:100dvh;max-width:100vw}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

@@ -7,7 +7,16 @@ const money=v=>Number(v).toLocaleString('sk-SK',{style:'currency',currency:'EUR'
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const localImages={'Kvetový med':'assets/kvetovy.webp','Agátový med':'assets/agatovy.webp','Pastovaný med':'assets/pastovany.webp','Medovicový med':'assets/medovicovy.webp'};
 const defaults={shop_name:'Medlove',subtitle:'Včelia farma Slnečná',hero_title:'Poctivý med priamo od včelára.',hero_text:'Slovenský med z Likavky.',phone:'0908 356 858',address:'Likavka 290',facebook:'Včelia Farma Slnečná',delivery_area:'Ružomberok a blízke okolie',free_delivery_qty:3,about_title:'Príroda. Kvalita. Poctivosť.',about_text:'Rodinná včelia farma z Likavky.',footer_text:'Poctivý slovenský med z Likavky.',announcement:'🚚 Pri odbere od 3 ks dovoz do RK a blízkeho okolia zdarma.',announcement_active:true};
-let products=[],settings={...defaults},cart=JSON.parse(localStorage.getItem('medlove_v5_cart')||'[]'),currentProductId=null;
+// Nedôveryhodný alebo starý obsah localStorage nesmie zastaviť načítanie obchodu.
+function readCart(){
+ try{
+  const parsed=JSON.parse(localStorage.getItem('medlove_v5_cart')||'[]');
+  if(!Array.isArray(parsed))return [];
+  return parsed.filter(x=>x&&typeof x.id==='string'&&Number.isInteger(x.qty)&&x.qty>=1&&x.qty<=20)
+   .slice(0,30);
+ }catch(err){console.warn('Uložený košík sa nedá prečítať.');return []}
+}
+let products=[],settings={...defaults},cart=readCart(),currentProductId=null;
 let backendStatus={available:false,card:false};
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function photo(p){return p.image_url||localImages[p.name]||null}
@@ -24,7 +33,14 @@ function applySettings(){
 }
 async function loadStore(){
  const [a,b]=await Promise.all([sb.from('products').select('*').eq('active',true).order('sort_order'),sb.from('shop_settings').select('*').eq('id',1).single()]);
- if(a.error){console.error(a.error);toast('Produkty sa nepodarilo načítať. Skontroluj pripojenie.')}else products=a.data||[];
+ if(a.error){
+  console.error(a.error);
+  toast('Produkty sa nepodarilo načítať. Skontroluj pripojenie.');
+  $('productGrid').innerHTML='<div class="catalog-error" role="alert"><h3>Ponuku sa nepodarilo načítať.</h3><p>Skontroluj pripojenie a skús to znova.</p><button type="button" class="btn btn-primary" id="retryProducts">Načítať znova</button></div>';
+  $('emptyState').classList.add('hidden');
+  $('retryProducts').onclick=loadStore;
+  return;
+ }else products=a.data||[];
  if(b.error)console.warn('Nastavenia obchodu:',b.error.message);else settings={...defaults,...b.data};
  applySettings();reconcileCart();renderProducts();renderCart();
 }
@@ -32,7 +48,7 @@ function filtered(){let list=products.filter(p=>p.active);const q=$('productSear
 function stockBadge(p){return Number(p.stock)===0?'<span class="stock out">Vypredané</span>':Number(p.stock)<=5?`<span class="stock low">Posledné ${p.stock} ks</span>`:'<span class="stock">Skladom</span>'}
 function renderProducts(){const list=filtered();$('emptyState').classList.toggle('hidden',list.length>0);$('productGrid').innerHTML=list.map(p=>`<article class="product-card ${p.featured?'featured':''}"><div class="product-image">${visual(p)}</div><div class="product-body"><div class="product-top"><span class="product-type">${esc(p.type||'Med')}</span>${stockBadge(p)}</div><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-bottom"><div class="price"><b>${money(p.price)}</b><small>${esc(p.weight||'')}</small></div><div class="product-actions"><button class="mini-btn" onclick="openProduct('${p.id}')" aria-label="Detail produktu">↗</button><button class="add-btn" onclick="addToCart('${p.id}')" ${Number(p.stock)<=0?'disabled':''}>Pridať</button></div></div></div></article>`).join('')}
 function reconcileCart(){cart=cart.filter(item=>products.some(p=>p.id===item.id&&p.active&&p.stock>0)).map(item=>{const p=products.find(p=>p.id===item.id);return{id:p.id,name:p.name,price:Number(p.price),image:photo(p),qty:Math.max(1,Math.min(Number(item.qty)||1,p.stock))}});saveCart(false)}
-function saveCart(redraw=true){localStorage.setItem('medlove_v5_cart',JSON.stringify(cart));if(redraw)renderCart()}
+function saveCart(redraw=true){try{localStorage.setItem('medlove_v5_cart',JSON.stringify(cart))}catch(err){console.warn('Košík sa nepodarilo uložiť:',err.message)}if(redraw)renderCart()}
 function qty(){return cart.reduce((sum,item)=>sum+item.qty,0)}
 function subtotal(){return cart.reduce((sum,item)=>sum+item.qty*item.price,0)}
 function addToCart(id){const p=products.find(p=>p.id===id);if(!p)return;let item=cart.find(x=>x.id===id);if(item&&item.qty>=p.stock){toast('Viac kusov už nie je na sklade.');return}if(item)item.qty++;else cart.push({id:p.id,name:p.name,price:Number(p.price),image:photo(p),qty:1});saveCart();toast(p.name+' pridaný do košíka.');}
@@ -52,6 +68,16 @@ function closeModal(id){$(id).classList.add('hidden');document.body.classList.re
 $('modalAddToCart').onclick=()=>{if(currentProductId){addToCart(currentProductId);closeModal('productModal');openDrawer()}};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
 $('openCart').onclick=openDrawer;$('closeCart').onclick=closeDrawer;$('overlay').onclick=closeDrawer;
+document.addEventListener('keydown',event=>{
+ if(event.key!=='Escape')return;
+ if($('checkoutModal')&&!$('checkoutModal').classList.contains('hidden'))closeModal('checkoutModal');
+ else if($('productModal')&&!$('productModal').classList.contains('hidden'))closeModal('productModal');
+ else if($('cartDrawer').classList.contains('open'))closeDrawer();
+ else if($('mainNav').classList.contains('open')){
+  $('mainNav').classList.remove('open');
+  $('mobileMenu').setAttribute('aria-expanded','false');
+ }
+});
 $('checkoutBtn').onclick=async()=>{
  if(location.hostname.endsWith('.github.io')){location.assign('https://medlovekivon.netlify.app/');return}
  if(!cart.length){toast('Košík je prázdny.');return}
@@ -101,7 +127,7 @@ $('checkoutForm').onsubmit=async e=>{
   cart=[];saveCart();closeModal('checkoutModal');e.target.reset();
   if(payment==='card'){location.assign(result.checkout_url);return}
   location.assign('objednavka-prijata.html?order='+encodeURIComponent(result.order_code));
- }catch(err){console.error(err);toast(err.message||'Objednávku sa nepodarilo odoslať.');}
+ }catch(err){console.error(err);toast(err instanceof TypeError?'Spojenie zlyhalo. Pred opakovaním objednávky nás kontaktuj, aby nevznikla duplicita.':err.message||'Objednávku sa nepodarilo odoslať.');}
  finally{submit.disabled=false;submit.textContent='Objednať s povinnosťou platby'}
 };
 $('productSearch').oninput=renderProducts;$('sortSelect').onchange=renderProducts;

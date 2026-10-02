@@ -22,7 +22,7 @@
   <div class="top-note" id="topNote">
     <div class="shell top-note-inner">
       <span id="announcementText">🚚 Pri odbere od 3 ks dovoz do Ružomberka a blízkeho okolia zdarma.</span>
-      <button id="closeAnnouncement" aria-label="Zavrieť">×</button>
+      <button id="closeAnnouncement" type="button" aria-label="Zavrieť oznámenie">×</button>
     </div>
   </div>
 
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <div class="product-grid" id="productGrid"></div>
+      <div class="product-grid" id="productGrid" aria-live="polite"><p class="catalog-loading" role="status">Načítavame ponuku medov…</p></div>
       <div class="empty-state hidden" id="emptyState">
         <span>🍯</span>
         <h3>Nič sme nenašli</h3>
@@ -254,7 +254,7 @@
         <span class="eyebrow">Nákup</span>
         <h3>Košík</h3>
       </div>
-      <button id="closeCart">×</button>
+      <button id="closeCart" type="button" aria-label="Zavrieť košík">×</button>
     </div>
 
     <div class="free-delivery-box" id="freeDeliveryBox">
@@ -274,7 +274,7 @@
 
   <div class="modal hidden" id="productModal">
     <div class="modal-card">
-      <button class="modal-close" data-close="productModal">×</button>
+      <button class="modal-close" type="button" data-close="productModal" aria-label="Zavrieť detail produktu">×</button>
       <div class="product-modal-grid">
         <div class="product-modal-image" id="modalProductImage"></div>
         <div>
@@ -294,7 +294,7 @@
 
   <div class="modal hidden" id="checkoutModal">
     <div class="modal-card checkout-card">
-      <button class="modal-close" data-close="checkoutModal">×</button>
+      <button class="modal-close" type="button" data-close="checkoutModal" aria-label="Zavrieť objednávku">×</button>
       <span class="eyebrow">Objednávka</span>
       <h2>Dokončenie objednávky</h2>
 
@@ -337,7 +337,7 @@
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="script.js"></script>
