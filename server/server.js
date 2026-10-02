@@ -5,6 +5,7 @@ const rateLimit=require('express-rate-limit');
 const Stripe=require('stripe');
 const {createClient}=require('@supabase/supabase-js');
 const {createNotifier}=require('./email');
+const {createRestock}=require('./restock');
 
 const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
 const frontendUrl=(process.env.FRONTEND_URL||'http://localhost:5500').replace(/\/$/,'');
@@ -130,7 +131,29 @@ app.get('/api/orders/:code/payment-status',paymentStatusLimit,async(req,res)=>{
  }
 });
 
-app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'6.5.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled}));
+
+// Private tracking uses a random token, never the guessable public order code.
+const trackLimit=rateLimit({windowMs:15*60*1000,max:30,standardHeaders:'draft-7',legacyHeaders:false});
+app.get('/api/track/:token',trackLimit,async(req,res)=>{
+ res.setHeader('Cache-Control','no-store');
+ const token=String(req.params.token||'');
+ if(!/^[a-f0-9]{64}$/.test(token))return res.status(404).json({error:'Objednávka sa nenašla.'});
+ try{
+  const found=await db.from('orders').select('id,order_code,status,payment_status,payment_type,delivery_type,created_at')
+   .eq('tracking_token',token).maybeSingle();
+  if(found.error)throw found.error;
+  if(!found.data)return res.status(404).json({error:'Objednávka sa nenašla.'});
+  const history=await db.from('order_events').select('event_type,new_value,created_at')
+   .eq('order_id',found.data.id).order('created_at',{ascending:true}).limit(100);
+  if(history.error)throw history.error;
+  const {id,...order}=found.data;
+  return res.json({...order,events:history.data||[]});
+ }catch(error){console.error('Sledovanie objednávky:',error.message);
+  return res.status(503).json({error:'Sledovanie je dočasne nedostupné.'})}
+});
+const restock=createRestock(db,app,frontendUrl);
+
+app.get('/api/health',(_req,res)=>res.json({service:'medlove-api',version:'7.2.0',ok:true,stripeConfigured:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailConfigured:mailer.enabled,restockConfigured:restock.enabled}));
 
 const orderLimit=rateLimit({windowMs:30*60*1000,max:12,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Príliš veľa pokusov. Skús to o chvíľu.'}});
 app.post('/api/orders',orderLimit,async(req,res)=>{
@@ -162,9 +185,13 @@ app.post('/api/orders',orderLimit,async(req,res)=>{
   });
   if(result.error)throw result.error;
   created=result.data?.[0];if(!created)throw Error('Databáza nevrátila objednávku.');
+  const tokenResult=await db.from('orders').select('tracking_token').eq('id',created.order_id).single();
+  if(tokenResult.error)console.error('Súkromný odkaz nebolo možné načítať:',tokenResult.error.message);
+  const trackingToken=tokenResult.data?.tracking_token||null;
+  const trackingUrl=trackingToken?frontendUrl+'/sledovanie.html?token='+trackingToken:null;
   if(payment==='cash'){
    void notifySafe(created.order_id);
-   return res.status(201).json({order_code:created.order_code,total:created.total});
+   return res.status(201).json({order_code:created.order_code,total:created.total,tracking_url:trackingUrl});
   }
 
   const lines=await db.from('order_items').select('product_name,unit_price,quantity').eq('order_id',created.order_id);
@@ -174,13 +201,13 @@ app.post('/api/orders',orderLimit,async(req,res)=>{
    client_reference_id:created.order_id,metadata:{order_id:created.order_id},
    line_items:lines.data.map(i=>({price_data:{currency:'eur',unit_amount:Math.round(Number(i.unit_price)*100),product_data:{name:i.product_name}},quantity:i.quantity})),
    expires_at:Math.floor(Date.now()/1000)+31*60,
-   success_url:frontendUrl+'/success.html?order='+encodeURIComponent(created.order_code),
+   success_url:frontendUrl+'/success.html?order='+encodeURIComponent(created.order_code)+(trackingToken?'&token='+trackingToken:''),
    cancel_url:frontendUrl+'/cancel.html'
   },{idempotencyKey:'medlove-'+created.order_id});
   const update=await db.from('orders').update({stripe_checkout_session_id:session.id,updated_at:new Date().toISOString()})
    .eq('id',created.order_id).eq('payment_status','pending').select('id').single();
   if(update.error)throw update.error;
-  return res.status(201).json({order_code:created.order_code,checkout_url:session.url});
+  return res.status(201).json({order_code:created.order_code,checkout_url:session.url,tracking_url:trackingUrl});
  }catch(err){
   console.error('Chyba objednávky:',err.message);
   if(created?.order_id){
