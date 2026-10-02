@@ -16,6 +16,7 @@
   <meta property="og:url" content="https://medlovekivon.netlify.app/">
   <meta property="og:image" content="https://medlovekivon.netlify.app/assets/medlove-products.webp">
   <meta name="twitter:card" content="summary_large_image">
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -41,10 +42,12 @@
       <nav id="mainNav">
         <a href="#produkty">Med</a>
         <a href="#farma">Naša farma</a>
+        <a href="#galeria">Fotogaléria</a>
         <a href="#preco">Prečo Medlove</a>
         <a href="#kontakt">Kontakt</a>
       </nav>
 
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Prepnúť vzhľad">◐ Automatický</button>
       <button class="cart-btn" id="openCart">
         Košík <span id="cartCount">0</span>
       </button>
@@ -141,6 +144,17 @@
       </div>
     </section>
 
+    <section class="section shell" id="galeria">
+      <div class="section-heading">
+        <div><span class="eyebrow">Zo života farmy</span><h2>Naša včelia farma v obrazoch</h2>
+          <p>Skutočné zábery úľov, včelárskej práce, zberu a balenia medu.</p></div>
+      </div>
+      <div class="farm-gallery" id="farmGallery" aria-live="polite">
+        <div class="gallery-placeholder"><span aria-hidden="true">📷</span><h3>Fotografie pripravujeme</h3>
+          <p>Galériu doplníme vlastnými fotografiami Včelej farmy Slnečná.</p></div>
+      </div>
+    </section>
+
     <section class="section shell" id="preco">
       <div class="section-heading">
         <div>
@@ -224,6 +238,7 @@
         <b>Obchod</b>
         <a href="#produkty">Naše medy</a>
         <a href="#farma">O farme</a>
+        <a href="#galeria">Fotogaléria</a>
         <a href="#kontakt">Kontakt</a>
       </div>
 
@@ -337,9 +352,14 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="galleryLightbox" role="dialog" aria-modal="true" aria-label="Fotografia farmy">
+    <div class="modal-card gallery-lightbox"><button id="closeGalleryLightbox" class="modal-close" type="button" aria-label="Zavrieť fotografiu">×</button>
+      <img id="lightboxPhoto" alt=""><p id="lightboxCaption"></p></div>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="script.js"></script>
+  <script src="gallery.js"></script>
 </body>
 </html>

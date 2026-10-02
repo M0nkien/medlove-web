@@ -255,3 +255,71 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* Medlove V7 – admin V2, upozornenia, skutočná fotogaléria, svetlý/tmavý režim */
+.theme-toggle{border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);padding:10px 12px;min-height:42px;white-space:nowrap;font-weight:800;font-size:.8rem}
+.theme-toggle:hover{border-color:var(--honey)}.theme-toggle-header{background:#ffffff16;color:#fff;border-color:#ffffff26}
+.farm-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.gallery-placeholder{grid-column:1/-1;text-align:center;background:var(--paper);padding:48px 18px;border:1px dashed var(--line);border-radius:24px}
+.gallery-placeholder>span{font-size:48px}.gallery-placeholder h3{margin:12px 0}.gallery-placeholder p{color:var(--muted)}
+.farm-gallery-item{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.gallery-photo-button{border:0;width:100%;background:var(--cream);display:block;padding:0;cursor:zoom-in}
+.gallery-photo-button img{display:block;width:100%;height:235px;object-fit:cover;transition:transform .2s}
+.gallery-photo-button:hover img{transform:scale(1.025)}
+.farm-gallery-item figcaption{padding:13px 16px}.farm-gallery-item figcaption strong,.farm-gallery-item figcaption span{display:block}
+.farm-gallery-item figcaption strong{font-size:.8rem;color:var(--honey2)}.farm-gallery-item figcaption span{color:var(--muted);margin-top:4px;font-size:.88rem}
+.gallery-lightbox{width:min(960px,96vw);padding:22px}.gallery-lightbox img{width:100%;max-height:75vh;object-fit:contain;display:block;border-radius:14px}
+.gallery-lightbox p{margin-bottom:0;color:var(--muted)}
+.admin-quick-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.admin-quick-actions .btn{font-size:.87rem}
+.notification-preview{margin-top:18px}.notification-list{display:flex;flex-direction:column;gap:9px}
+.notification-item{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:13px;padding:13px 14px}
+.notification-item:hover{border-color:var(--honey);background:var(--cream)}
+.notification-item.notification-critical{border-left:4px solid #d85044}
+.notification-item.notification-pending{border-left:4px solid var(--honey)}
+.notification-icon{font-size:1.35rem}.notification-content{display:block;flex:1;min-width:0}
+.notification-content strong,.notification-content small{display:block;overflow-wrap:anywhere}
+.notification-content small{color:var(--muted);margin-top:4px}
+.notification-empty,.gallery-admin-empty{color:var(--muted);margin:0;padding:14px}
+.admin-gallery-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+.admin-gallery-card{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--paper)}
+.admin-gallery-card img{width:100%;height:180px;object-fit:cover;display:block}
+.admin-gallery-card-body{padding:14px}.admin-gallery-card-body strong,.admin-gallery-card-body small{display:block}
+.admin-gallery-card-body small{color:var(--muted);margin:6px 0 14px}
+.admin-gallery-actions{display:flex;gap:7px;flex-wrap:wrap}.admin-gallery-actions .btn{padding:9px 11px;font-size:.8rem}
+.admin-header{box-shadow:0 6px 24px #0002}.admin-main{max-width:1800px;width:100%;margin:0 auto}
+.stats article{transition:transform .2s}.stats article:hover{transform:translateY(-2px)}
+.admin-tab:focus-visible{outline:2px solid var(--honey);outline-offset:0}
+:root[data-theme="dark"]{
+ --bg:#14120f;--paper:#211d18;--cream:#2a241b;--ink:#f4ede0;
+ --muted:#c4b7a1;--line:#473d31;--honey:#ecb33e;--honey2:#efbc56;
+ --dark:#14110e;--dark2:#211a14;--danger:#d97069;
+ --shadow:0 16px 45px #0005;
+}
+:root[data-theme="dark"] .site-header{background:#201b16ed;border-bottom-color:var(--line)}
+:root[data-theme="dark"] .hero{background:radial-gradient(circle at 75% 12%,#6f4a14,transparent 32%),linear-gradient(145deg,#241b13,#372714)}
+:root[data-theme="dark"] .hero-copy>p{color:var(--muted)}
+:root[data-theme="dark"] .hero-art,:root[data-theme="dark"] .photo-hero{background:#302619;border-color:var(--line)}
+:root[data-theme="dark"] .btn-secondary{background:#362d23;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .search input,:root[data-theme="dark"] .modal-card input,:root[data-theme="dark"] .modal-card select,
+:root[data-theme="dark"] .modal-card textarea,:root[data-theme="dark"] .admin-card input,
+:root[data-theme="dark"] .admin-card select,:root[data-theme="dark"] .admin-card textarea,
+:root[data-theme="dark"] .login-card input,:root[data-theme="dark"] .stock-control input,
+:root[data-theme="dark"] .shop-tools select,:root[data-theme="dark"] .admin-toolbar select{
+ background:#302920!important;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder{color:#a99b86}
+:root[data-theme="dark"] .mini-btn,:root[data-theme="dark"] .qty button{background:#352c21;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .order-box,:root[data-theme="dark"] .stock-card{background:#2b241b}
+:root[data-theme="dark"] .farm-points>div>span,:root[data-theme="dark"] .contact-card>span{background:#57401b;color:#fff4d8}
+:root[data-theme="dark"] .farm-visual{background:linear-gradient(145deg,#1c1813,#100e0b)}
+:root[data-theme="dark"] .admin-body{background:var(--bg)}
+:root[data-theme="dark"] .login-screen{background:radial-gradient(circle at 15% 15%,#614416,transparent 25%),linear-gradient(145deg,#1c1813,#2a2116)}
+:root[data-theme="dark"] .save-bar{background:#14120fee}
+:root[data-theme="dark"] .low-stock-item,:root[data-theme="dark"] .notification-item:hover{background:#322a20}
+:root[data-theme="dark"] .product-card .product-image img{background:#30251a}
+:root[data-theme="dark"] .admin-sidebar{background:#18140f}
+@media(max-width:1050px){.farm-gallery,.admin-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.theme-toggle{font-size:0;padding:8px;min-width:42px}.theme-toggle::first-letter{font-size:1rem}
+ .farm-gallery,.admin-gallery-grid{grid-template-columns:1fr}.admin-actions{align-items:center}
+ .notification-preview{margin-top:14px}.admin-main{padding:15px}
+}

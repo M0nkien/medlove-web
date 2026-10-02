@@ -120,3 +120,13 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Migrácia sql/003_medlove_security.sql odoberá anonymovi tabuľkové práva na objednávky a obmedzuje priamy admin zápis na status a updated_at. Serverové Stripe operácie zostávajú pod service_role.
 - Zmenené: public/admin.js, public/script.js, server/server.js, server/package.json, netlify.toml, README.md; nové sql/003_medlove_security.sql.
 - Over po nasadení: opätovné prihlásenie admina, načítanie objednávok, zmenu stavu, hotovostnú objednávku a Stripe TEST platbu.
+
+## Medlove V7 – Admin V2, upozornenia, tmavý režim a galéria
+- **Centrum upozornení:** nová sekcia a počítadlo v admin hlavičke i menu, rýchle upozornenia na nové objednávky, kartové platby čakajúce na Stripe a zásoby do 5 ks. Údaje sa obnovujú počas aktívnej administrácie raz za minútu alebo tlačidlom Obnoviť; nejde o push správy. Každé upozornenie vedie na príslušnú objednávku alebo sklad.
+- **Admin V2:** upravený dashboard, štyri rýchle akcie, náhľad upozornení, samostatná správa fotogalérie a lepší mobilný layout. Súčasné objednávky, práva RLS, Stripe a admin prihlásenie ostávajú.
+- **Vzhľad:** nové `public/theme.js` zabezpečuje Automatický / Svetlý / Tmavý režim podľa nastavení zariadenia a voliteľnej trvalej voľby; platí na web, admin a informačné stránky.
+- **Galéria:** `public/gallery.js`, sekcia `#galeria`, zväčšenie fotografií. Admin nahráva JPG/PNG/WebP do 5 MB do existujúceho bucketu `product-images/gallery/`, potvrdzuje práva, volí kategóriu, poradie a publikovanie; fotografie možno skryť alebo odstrániť. Verejná databázová RLS sprístupňuje len publikované fotografie; záznamy sú v `public.farm_gallery`.
+- **Dôležité:** do galérie sme NENAHRAli žiadne cudzie obrázky ani vymyslené zábery farmy. Až do nahratia vlastných fotiek zobrazuje neutrálny text Fotografie pripravujeme. Obrázok poslaný v chate nie je overenou fotografiou Včelej farmy Slnečná.
+- Migrácia `sql/004_medlove_gallery.sql` bola aplikovaná na Supabase projekt Medlove, existujúce objednávky a produkty zostali nedotknuté.
+- Nasadenie: GitHub `main` → Netlify publish `public`. Nepotrebuje aktualizáciu Render backendu. Otestuj oba režimy, admin načítanie, upozornenia, nahratie reálnej fotografie, zverejnenie/skrytie a verejnú galériu.
+- Úpravy: `public/index.html`, `public/admin.html`, `public/admin.js`, `public/style.css`, informačné HTML stránky a `README.md`; nové `public/gallery.js`, `public/theme.js`, `sql/004_medlove_gallery.sql`.

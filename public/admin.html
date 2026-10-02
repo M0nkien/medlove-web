@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#15130f">
   <meta name="robots" content="noindex,nofollow"><title>Admin • Medlove</title>
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="admin-body">
@@ -19,6 +20,7 @@
 
       <form class="login-card" id="loginForm">
         <h2>Prihlásenie</h2>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Prepnúť vzhľad">◐ Automatický</button>
         <label>E-mail<input id="adminEmail" type="email" autocomplete="username" placeholder="E-mail administrátora" required></label>
         <label>Heslo<input id="adminPassword" type="password" autocomplete="current-password" required></label>
         <button class="btn btn-primary full" type="submit">Prihlásiť sa</button>
@@ -36,6 +38,8 @@
       </div>
 
       <div class="admin-actions">
+        <button class="theme-toggle theme-toggle-header" type="button" data-theme-toggle aria-label="Prepnúť vzhľad">◐ Automatický</button>
+        <button class="btn btn-dark-ghost" type="button" id="headerNotifications" aria-label="Otvoriť centrum upozornení">🔔 <span id="headerNotificationCount">0</span></button>
         <a class="btn btn-dark-ghost" href="index.html">Zobraziť web</a>
         <button class="btn btn-danger" id="logoutBtn">Odhlásiť</button>
       </div>
@@ -46,10 +50,15 @@
         <span class="side-label">Prehľad</span>
         <button class="admin-tab active" data-page="dashboard">📊 Dashboard</button>
 
+        <button class="admin-tab" data-page="notifications">🔔 Upozornenia <b id="notificationCountSide">0</b></button>
+
         <span class="side-label">Obchod</span>
         <button class="admin-tab" data-page="products">🍯 Produkty <b id="productCountSide">0</b></button>
         <button class="admin-tab" data-page="orders">📦 Objednávky <b id="orderCountSide">0</b></button>
         <button class="admin-tab" data-page="stock">📚 Sklad</button>
+
+        <span class="side-label">Obsah</span>
+        <button class="admin-tab" data-page="gallery">📷 Fotogaléria</button>
 
         <span class="side-label">Web</span>
         <button class="admin-tab" data-page="settings">⚙️ Nastavenia</button>
@@ -61,18 +70,25 @@
           <div class="admin-page-head">
             <div>
               <span class="eyebrow">Prehľad</span>
-              <h1>Vitaj v Medlove</h1>
-              <p>Tu vidíš najdôležitejšie informácie o obchode.</p>
+              <h1>Medlove · Admin V2</h1>
+              <p>Objednávky, sklad, obsah stránky a všetko, čo vyžaduje pozornosť.</p>
             </div>
             <button class="btn btn-primary" data-jump="products">+ Pridať produkt</button>
           </div>
 
+          <div class="admin-quick-actions"><button type="button" class="btn btn-secondary" data-jump="notifications">🔔 Upozornenia</button><button type="button" class="btn btn-secondary" data-jump="orders">📦 Objednávky</button><button type="button" class="btn btn-secondary" data-jump="stock">🍯 Sklad</button><button type="button" class="btn btn-secondary" data-jump="gallery">📷 Galéria</button></div>
           <div class="stats">
             <article><span>Produkty</span><b id="statProducts">0</b><small>v katalógu</small></article>
             <article><span>Objednávky</span><b id="statOrders">0</b><small>celkom</small></article>
             <article><span>Nové</span><b id="statNew">0</b><small>na vybavenie</small></article>
             <article><span>Tržby</span><b id="statRevenue">0 €</b><small>vybavené objednávky</small></article>
           </div>
+
+          <article class="admin-card notification-preview">
+            <div class="admin-card-head"><div><span class="eyebrow">Centrum pozornosti</span><h3>Aktuálne upozornenia</h3></div>
+              <button type="button" class="text-btn" data-jump="notifications">Zobraziť všetky →</button></div>
+            <div id="dashboardNotifications" class="notification-list" aria-live="polite"></div>
+          </article>
 
           <div class="dashboard-grid">
             <article class="admin-card">
@@ -94,6 +110,13 @@
               <div id="lowStockList" class="low-stock-list"></div>
             </article>
           </div>
+        </section>
+
+        <section class="admin-page" id="notifications">
+          <div class="admin-page-head"><div><span class="eyebrow">Prehľad</span><h1>Centrum upozornení</h1>
+            <p>Nové objednávky, platby čakajúce na potvrdenie a nízke zásoby. Údaje sa obnovujú počas otvorenej administrácie.</p></div>
+            <button id="refreshNotifications" class="btn btn-secondary" type="button">↻ Obnoviť</button></div>
+          <article class="admin-card"><div id="notificationList" class="notification-list" aria-live="polite"></div></article>
         </section>
 
         <section class="admin-page" id="products">
@@ -176,6 +199,26 @@
           <div class="stock-grid" id="stockGrid"></div>
         </section>
 
+        <section class="admin-page" id="gallery">
+          <div class="admin-page-head"><div><span class="eyebrow">Obsah stránky</span><h1>Fotogaléria farmy</h1>
+            <p>Nahrávaj iba vlastné fotografie alebo tie, na ktoré má farma povolenie. Skryté fotografie návštevníci neuvidia.</p></div></div>
+          <article class="admin-card">
+            <h3>Pridať fotografiu</h3>
+            <form id="galleryForm">
+              <div class="form-grid">
+                <label>Fotografia (JPG, PNG, WebP; max. 5 MB)<input id="galleryPhoto" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+                <label>Kategória<select id="galleryCategory"><option>Zo života farmy</option><option>Úle</option><option>Zber medu</option><option>Balenie</option></select></label>
+              </div>
+              <div class="form-grid"><label>Popis<input id="galleryCaption" maxlength="200" placeholder="Napríklad: Naše úle pri západe slnka"></label>
+                <label>Poradie<input id="galleryOrder" type="number" min="0" value="0"></label></div>
+              <label class="check-row"><input id="galleryPublished" type="checkbox" checked> Zverejniť fotografiu na webe</label>
+              <label class="check-row"><input id="galleryRights" type="checkbox" required> Potvrdzujem, že máme právo fotografiu zverejniť</label>
+              <button type="submit" class="btn btn-primary">Pridať fotografiu</button>
+            </form>
+          </article>
+          <div id="adminGalleryGrid" class="admin-gallery-grid" aria-live="polite"><p>Načítavame galériu…</p></div>
+        </section>
+
         <section class="admin-page" id="settings">
           <div class="admin-page-head">
             <div>
@@ -224,7 +267,7 @@
           <div class="admin-page-head">
             <div>
               <span class="eyebrow">Dáta</span>
-              <h1>Záloha a obnova</h1>
+              <h1>Export a obnova</h1>
               <p>Exportuj si aktuálne údaje alebo obnov ukážkovú verziu.</p>
             </div>
           </div>
@@ -239,7 +282,7 @@
             <article class="admin-card">
               <h3>Obnova dát</h3>
               <p>V produkcii databázu automaticky nemažeme. Obnova sa vykonáva z overenej databázovej zálohy.</p>
-              <button class="btn btn-danger" id="resetBtn">Obnova dát dáta</button>
+              <button class="btn btn-danger" id="resetBtn">Obnova z overenej zálohy</button>
             </article>
           </div>
         </section>
