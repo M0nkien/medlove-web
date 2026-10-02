@@ -20,7 +20,7 @@ function readCart(){
  }catch(err){console.warn('Uložený košík sa nedá prečítať.');return []}
 }
 let products=[],settings={...defaults},cart=readCart(),currentProductId=null;
-let backendStatus={available:false,card:false};
+let backendStatus={available:false,card:false,restock:false};
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function photo(p){return p.image_url||localImages[p.name]||null}
 function visual(p){const src=photo(p);return src?`<img src="${esc(src)}" alt="${esc(p.name)}" loading="lazy">`:'🍯'}
@@ -35,7 +35,7 @@ function applySettings(){
  document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.href=telephone());
 }
 async function loadStore(){
- const [a,b]=await Promise.all([sb.from('products').select('*').eq('active',true).order('sort_order'),sb.from('shop_settings').select('*').eq('id',1).single()]);
+ const [a,b]=await Promise.all([sb.from('products').select('*,product_photos(image_url,sort_order)').eq('active',true).order('sort_order'),sb.from('shop_settings').select('*').eq('id',1).single()]);
  if(a.error){
   console.error(a.error);
   toast('Produkty sa nepodarilo načítať. Skontroluj pripojenie.');
@@ -49,12 +49,12 @@ async function loadStore(){
 }
 function filtered(){let list=products.filter(p=>p.active);const q=$('productSearch').value.toLowerCase().trim();if(q)list=list.filter(p=>(p.name+' '+p.type+' '+(p.description||'')).toLowerCase().includes(q));const sort=$('sortSelect').value;if(sort==='price-asc')list.sort((a,b)=>a.price-b.price);else if(sort==='price-desc')list.sort((a,b)=>b.price-a.price);else if(sort==='name')list.sort((a,b)=>a.name.localeCompare(b.name,'sk'));else list.sort((a,b)=>(Number(b.featured)-Number(a.featured))+(a.sort_order-b.sort_order)*.01);return list;}
 function stockBadge(p){return Number(p.stock)===0?'<span class="stock out">Vypredané</span>':Number(p.stock)<=5?`<span class="stock low">Posledné ${p.stock} ks</span>`:'<span class="stock">Skladom</span>'}
-function renderProducts(){const list=filtered();$('emptyState').classList.toggle('hidden',list.length>0);$('productGrid').innerHTML=list.map(p=>`<article class="product-card ${p.featured?'featured':''}"><div class="product-image">${visual(p)}</div><div class="product-body"><div class="product-top"><span class="product-type">${esc(p.type||'Med')}</span>${stockBadge(p)}</div><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-bottom"><div class="price"><b>${money(p.price)}</b><small>${esc(p.weight||'')}</small></div><div class="product-actions"><button class="mini-btn" onclick="openProduct('${p.id}')" aria-label="Detail produktu">↗</button><button class="add-btn" onclick="addToCart('${p.id}')" ${Number(p.stock)<=0?'disabled':''}>Pridať</button></div></div></div></article>`).join('')}
+function renderProducts(){const list=filtered();$('emptyState').classList.toggle('hidden',list.length>0);$('productGrid').innerHTML=list.map(p=>`<article class="product-card ${p.featured?'featured':''}"><div class="product-image">${visual(p)}</div><div class="product-body"><div class="product-top"><span class="product-type">${esc(p.type||'Med')}</span>${stockBadge(p)}</div><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-bottom"><div class="price"><b>${money(p.price)}</b><small>${esc(p.weight||'')}</small></div><div class="product-actions"><button class="mini-btn" onclick="openProduct('${p.id}')" aria-label="Detail produktu">↗</button>${Number(p.stock)<=0?(backendStatus.restock?`<button class="add-btn" onclick="openRestock('${p.id}')">Upozorniť</button>`:'<button class="add-btn" disabled>Vypredané</button>'):`<button class="add-btn" onclick="addToCart('${p.id}')">Pridať</button>`}</div></div></div></article>`).join('')}
 function reconcileCart(){cart=cart.filter(item=>products.some(p=>p.id===item.id&&p.active&&p.stock>0)).map(item=>{const p=products.find(p=>p.id===item.id);return{id:p.id,name:p.name,price:Number(p.price),image:photo(p),qty:Math.max(1,Math.min(Number(item.qty)||1,p.stock))}});saveCart(false)}
 function saveCart(redraw=true){try{localStorage.setItem('medlove_v5_cart',JSON.stringify(cart))}catch(err){console.warn('Košík sa nepodarilo uložiť:',err.message)}if(redraw)renderCart()}
 function qty(){return cart.reduce((sum,item)=>sum+item.qty,0)}
 function subtotal(){return cart.reduce((sum,item)=>sum+item.qty*item.price,0)}
-function addToCart(id){const p=products.find(p=>p.id===id);if(!p)return;let item=cart.find(x=>x.id===id);if(item&&item.qty>=p.stock){toast('Viac kusov už nie je na sklade.');return}if(item)item.qty++;else cart.push({id:p.id,name:p.name,price:Number(p.price),image:photo(p),qty:1});saveCart();toast(p.name+' pridaný do košíka.');}
+function addToCart(id){const p=products.find(p=>p.id===id);if(!p)return;let item=cart.find(x=>x.id===id);if(item&&item.qty>=p.stock){toast('Viac kusov už nie je na sklade.');return}if(item)item.qty++;else cart.push({id:p.id,name:p.name,price:Number(p.price),image:photo(p),qty:1});saveCart();$('openCart').classList.remove('cart-bump');void $('openCart').offsetWidth;$('openCart').classList.add('cart-bump');toast(p.name+' pridaný do košíka.');}
 function changeQty(id,delta){const p=products.find(p=>p.id===id),item=cart.find(x=>x.id===id);if(!item)return;item.qty+=delta;if(item.qty<=0)cart=cart.filter(x=>x.id!==id);else if(p&&item.qty>p.stock){item.qty=p.stock;toast('Dosiahnutý dostupný sklad.')}saveCart()}
 function removeItem(id){cart=cart.filter(x=>x.id!==id);saveCart()}
 window.addToCart=addToCart;window.changeQty=changeQty;window.removeItem=removeItem;
@@ -65,7 +65,7 @@ function renderCart(){
 }
 function openDrawer(){$('cartDrawer').classList.add('open');$('overlay').classList.add('open');document.body.classList.add('no-scroll')}
 function closeDrawer(){$('cartDrawer').classList.remove('open');$('overlay').classList.remove('open');document.body.classList.remove('no-scroll')}
-function openProduct(id){const p=products.find(x=>x.id===id);if(!p)return;currentProductId=p.id;$('modalProductImage').innerHTML=visual(p);$('modalProductType').textContent=p.type||'Med';$('modalProductName').textContent=p.name;$('modalProductDescription').textContent=p.description||'';$('modalProductPrice').textContent=money(p.price);$('modalProductWeight').textContent=p.weight||'';$('modalProductStock').textContent=p.stock>0?`Skladom ${p.stock} ks`:'Vypredané';$('modalAddToCart').disabled=p.stock<=0;$('productModal').classList.remove('hidden');document.body.classList.add('no-scroll')}
+function openProduct(id){const p=products.find(x=>x.id===id);if(!p)return;currentProductId=p.id;$('modalProductImage').innerHTML=visual(p);$('modalProductType').textContent=p.type||'Med';$('modalProductName').textContent=p.name;$('modalProductDescription').textContent=p.description||'';$('modalProductPrice').textContent=money(p.price);$('modalProductWeight').textContent=p.weight||'';$('modalProductStock').textContent=p.stock>0?`Skladom ${p.stock} ks`:'Vypredané';$('modalAddToCart').disabled=p.stock<=0;$('modalAddToCart').classList.toggle('hidden',p.stock<=0);$('modalRestockBtn').classList.toggle('hidden',p.stock>0||!backendStatus.restock);renderProductThumbs(p);$('productModal').classList.remove('hidden');document.body.classList.add('no-scroll')}
 window.openProduct=openProduct;
 function closeModal(id){$(id).classList.add('hidden');document.body.classList.remove('no-scroll')}
 $('modalAddToCart').onclick=()=>{if(currentProductId){addToCart(currentProductId);closeModal('productModal');openDrawer()}};
@@ -94,7 +94,7 @@ async function checkBackendStatus(){
   const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),12000);
   try{
    const r=await fetch(cfg.apiBaseUrl.replace(/\/$/,'')+'/api/health',{signal:ctrl.signal});
-   if(r.ok){const d=await r.json();backendStatus={available:!!d.ok,card:!!d.stripeConfigured}}
+   if(r.ok){const d=await r.json();backendStatus={available:!!d.ok,card:!!d.stripeConfigured,restock:!!d.restockConfigured}}
   }finally{clearTimeout(timer)}
  }catch(err){console.warn('Backend sa nepodarilo overiť:',err.message)}
  return backendStatus;
@@ -129,7 +129,7 @@ $('checkoutForm').onsubmit=async e=>{
   if(payment==='card'&&!result.checkout_url)throw Error('Chýba platobná adresa. Kontaktuj predajcu.');
   cart=[];saveCart();closeModal('checkoutModal');e.target.reset();
   if(payment==='card'){location.assign(result.checkout_url);return}
-  location.assign('objednavka-prijata.html?order='+encodeURIComponent(result.order_code));
+  location.assign('objednavka-prijata.html?order='+encodeURIComponent(result.order_code)+(result.tracking_url?'&token='+encodeURIComponent(new URL(result.tracking_url).searchParams.get('token')):''));
  }catch(err){console.error(err);toast(err instanceof TypeError?'Spojenie zlyhalo. Pred opakovaním objednávky nás kontaktuj, aby nevznikla duplicita.':err.message||'Objednávku sa nepodarilo odoslať.');}
  finally{submit.disabled=false;submit.textContent='Objednať s povinnosťou platby'}
 };
