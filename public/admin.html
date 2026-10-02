@@ -146,11 +146,19 @@
                 <option value="done">Vybavené</option>
                 <option value="cancelled">Zrušené</option>
               </select>
+              <select id="paymentFilter" aria-label="Filtrovať podľa platby">
+                <option value="all">Všetky platby</option>
+                <option value="paid">Zaplatené kartou</option>
+                <option value="pending">Čaká na kartovú platbu</option>
+                <option value="unpaid">Hotovosť pri prevzatí</option>
+                <option value="failed">Platba zlyhala</option>
+                <option value="refunded">Vrátená platba</option>
+              </select>
             </div>
 
             <div class="table-wrap">
               <table>
-                <thead><tr><th>ID</th><th>Zákazník</th><th>Suma</th><th>Dátum</th><th>Prevzatie</th><th>Stav</th><th></th></tr></thead>
+                <thead><tr><th>ID</th><th>Zákazník</th><th>Suma</th><th>Dátum</th><th>Prevzatie</th><th>Platba</th><th>Stav</th><th></th></tr></thead>
                 <tbody id="ordersTable"></tbody>
               </table>
             </div>

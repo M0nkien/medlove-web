@@ -100,10 +100,10 @@ $('checkoutForm').onsubmit=async e=>{
   if(payment==='card'&&!result.checkout_url)throw Error('Chýba platobná adresa. Kontaktuj predajcu.');
   cart=[];saveCart();closeModal('checkoutModal');e.target.reset();
   if(payment==='card'){location.assign(result.checkout_url);return}
-  toast('Objednávka '+result.order_code+' bola prijatá.');await loadStore();alert('Ďakujeme! Objednávka '+result.order_code+' bola prijatá. Ozveme sa telefonicky.');
+  location.assign('objednavka-prijata.html?order='+encodeURIComponent(result.order_code));
  }catch(err){console.error(err);toast(err.message||'Objednávku sa nepodarilo odoslať.');}
  finally{submit.disabled=false;submit.textContent='Objednať s povinnosťou platby'}
 };
 $('productSearch').oninput=renderProducts;$('sortSelect').onchange=renderProducts;
-$('mobileMenu').onclick=()=>$('mainNav').classList.toggle('open');$('mainNav').querySelectorAll('a').forEach(a=>a.onclick=()=>$('mainNav').classList.remove('open'));$('closeAnnouncement').onclick=()=>$('topNote').classList.add('hidden');
+$('mobileMenu').onclick=()=>{const open=$('mainNav').classList.toggle('open');$('mobileMenu').setAttribute('aria-expanded',String(open))};$('mainNav').querySelectorAll('a').forEach(a=>a.onclick=()=>{$('mainNav').classList.remove('open');$('mobileMenu').setAttribute('aria-expanded','false')});$('closeAnnouncement').onclick=()=>$('topNote').classList.add('hidden');
 applySettings();renderCart();loadStore().then(()=>{if(location.hostname.endsWith('.github.io')){$('topNote').classList.remove('hidden');$('announcementText').textContent='Toto je ukážka Medlove na GitHub Pages. Objednávky vybavíš na hlavnom webe medlovekivon.netlify.app.';$('checkoutBtn').textContent='Objednať na hlavnom webe';}});

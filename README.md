@@ -91,3 +91,13 @@ Stripe Dashboard → Developers / Workbench → Webhooks / Event destinations:
 - Pri hotovostnej objednávke alebo potvrdenej platbe kartou systém pripraví potvrdenie zákazníkovi (ak má e-mail) a upozornenie majiteľovi cez Resend. Doručenie sa eviduje v databáze; výpadok e-mailu nemení úspešný stav objednávky. E-maily sú vypnuté, kým v Render Environment nebudú nastavené všetky 4 premenné vrátane času aktivácie.
 - Nasadenie: GitHub main automaticky aktualizuje Netlify a podľa konfigurácie Render; inak Render → Manual Deploy → Deploy latest commit. Pre e-mail vyplň `RESEND_API_KEY`, `EMAIL_FROM`, `ORDER_NOTIFICATION_EMAIL` a `EMAIL_NOTIFICATIONS_FROM` podľa `PRE-SPUSTENIM.md` a urob nový test.
 - PRED LIVE: over údaje predávajúceho, etikety, sklad, vlastnú doménu a live Stripe. Návrhy z `docs/` nie sú právne schválené ani verejne prelinkované; nepredstieraj pripravenosť na ostrý predaj.
+
+## V6.3 – dokončenie zákazníckeho nákupu a SEO
+- **Nové súbory**: `public/objednavka-prijata.html` (potvrdenie objednávky na hotovosť), `public/favicon.svg`, `public/robots.txt`, `public/sitemap.xml`.
+- **Upravené súbory**: `public/index.html`, `public/script.js`, `public/admin.html`, `public/admin.js`, `public/style.css`, `README.md`.
+- Hotovostné objednávky sa po úspešnom zápise zobrazia na samostatnej stránke s číslom objednávky a jasným upozornením, že hotovosť ešte nebola zaplatená.
+- V admine je filter podľa platby a samostatný stĺpec stavu platby. Nezasahuje do Stripe ani serverových transakcií.
+- SEO: canonical URL hlavného obchodu, Open Graph údaje, favicon, sitemap a robots. GitHub Pages zostáva iba ukážka.
+- Mobilné ovládanie, klávesnicové zvýraznenie a dopĺňanie údajov v objednávke boli vylepšené.
+- Právne texty sa **nezverejnili**: stále potrebujú skutočné údaje prevádzkovateľa a kontrolu. Nezverejňovať obchod na ostrý predaj, kým tieto podklady nie sú hotové.
+- Nasadenie: GitHub main; Netlify publish `public`. Testuj osobitne hotovostnú objednávku, stav platieb v admin paneli a mobil.

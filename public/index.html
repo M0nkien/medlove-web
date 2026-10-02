@@ -6,6 +6,16 @@
   <meta name="theme-color" content="#15130f">
   <meta name="description" content="Medlove – Včelia farma Slnečná. Poctivý slovenský med z Likavky: kvetový, agátový, pastovaný a medovicový med.">
   <title>Medlove • Včelia farma Slnečná</title>
+  <link rel="canonical" href="https://medlovekivon.netlify.app/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="sk_SK">
+  <meta property="og:site_name" content="Medlove">
+  <meta property="og:title" content="Medlove – Včelia farma Slnečná">
+  <meta property="og:description" content="Poctivý slovenský med z Likavky. Kvetový, agátový, pastovaný a medovicový med.">
+  <meta property="og:url" content="https://medlovekivon.netlify.app/">
+  <meta property="og:image" content="https://medlovekivon.netlify.app/assets/medlove-products.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,7 +36,7 @@
         </span>
       </a>
 
-      <button class="mobile-menu" id="mobileMenu">☰</button>
+      <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Otvoriť navigáciu" aria-controls="mainNav" aria-expanded="false">☰</button>
 
       <nav id="mainNav">
         <a href="#produkty">Med</a>
@@ -220,8 +230,8 @@
       <div>
         <b>Informácie</b>
         <a href="doprava-a-platba.html">Doprava a platba</a>
-        <a href="#">Obchodné podmienky</a>
-        <a href="#">Ochrana osobných údajov</a>
+        <span class="footer-pending">Obchodné podmienky – pripravujeme</span>
+        <span class="footer-pending">Ochrana osobných údajov – pripravujeme</span>
       </div>
 
       <div>
@@ -290,11 +300,11 @@
 
       <form id="checkoutForm">
         <div class="form-grid">
-          <label>Meno a priezvisko<input id="orderName" required></label>
-          <label>Telefón<input id="orderPhone" required></label>
+          <label>Meno a priezvisko<input id="orderName" autocomplete="name" maxlength="120" required></label>
+          <label>Telefón<input id="orderPhone" type="tel" autocomplete="tel" maxlength="30" required></label>
         </div>
 
-        <label>E-mail<input id="orderEmail" type="email"></label>
+        <label>E-mail<input id="orderEmail" type="email" autocomplete="email" maxlength="254"></label>
 
         <div class="form-grid">
           <label>Spôsob prevzatia
@@ -313,8 +323,8 @@
           </label>
         </div>
 
-        <label>Adresa / miesto doručenia<input id="orderAddress" placeholder="Pri osobnom odbere nemusíš vypĺňať"></label>
-        <label>Poznámka<textarea id="orderNote" rows="3"></textarea></label>
+        <label>Adresa / miesto doručenia<input id="orderAddress" autocomplete="street-address" maxlength="400" placeholder="Pri osobnom odbere nemusíš vypĺňať"></label>
+        <label>Poznámka<textarea id="orderNote" rows="3" maxlength="1000"></textarea></label>
 
         <div class="checkout-total">
           <span>Spolu</span>
