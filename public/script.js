@@ -53,6 +53,7 @@ $('modalAddToCart').onclick=()=>{if(currentProductId){addToCart(currentProductId
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
 $('openCart').onclick=openDrawer;$('closeCart').onclick=closeDrawer;$('overlay').onclick=closeDrawer;
 $('checkoutBtn').onclick=async()=>{
+ if(location.hostname.endsWith('.github.io')){location.assign('https://medlovekivon.netlify.app/');return}
  if(!cart.length){toast('Košík je prázdny.');return}
  closeDrawer();$('checkoutModal').classList.remove('hidden');document.body.classList.add('no-scroll');
  updateCheckoutInfo();await checkBackendStatus();updateCheckoutInfo();
@@ -86,7 +87,8 @@ function updateCheckoutInfo(){
 }
 $('orderDelivery').onchange=updateCheckoutInfo;$('orderPayment').onchange=updateCheckoutInfo;
 $('checkoutForm').onsubmit=async e=>{
- e.preventDefault();const delivery=$('orderDelivery').value,payment=$('orderPayment').value;
+ e.preventDefault();
+ if(location.hostname.endsWith('.github.io')){location.assign('https://medlovekivon.netlify.app/');return}const delivery=$('orderDelivery').value,payment=$('orderPayment').value;
  if(delivery==='local'&&qty()<Math.max(1,Number(settings.free_delivery_qty)||3)){toast('Lokálny dovoz zdarma platí od '+settings.free_delivery_qty+' ks.');return}
  if(payment==='card'&&!$('orderEmail').value.trim()){toast('Pri platbe kartou zadaj e-mail.');return}
  if(!backendStatus.available){toast('Objednávkový server nie je dostupný. Skontroluj Render.');return}
@@ -104,4 +106,4 @@ $('checkoutForm').onsubmit=async e=>{
 };
 $('productSearch').oninput=renderProducts;$('sortSelect').onchange=renderProducts;
 $('mobileMenu').onclick=()=>$('mainNav').classList.toggle('open');$('mainNav').querySelectorAll('a').forEach(a=>a.onclick=()=>$('mainNav').classList.remove('open'));$('closeAnnouncement').onclick=()=>$('topNote').classList.add('hidden');
-applySettings();renderCart();loadStore();
+applySettings();renderCart();loadStore().then(()=>{if(location.hostname.endsWith('.github.io')){$('topNote').classList.remove('hidden');$('announcementText').textContent='Toto je ukážka Medlove na GitHub Pages. Objednávky vybavíš na hlavnom webe medlovekivon.netlify.app.';$('checkoutBtn').textContent='Objednať na hlavnom webe';}});
