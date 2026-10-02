@@ -55,6 +55,7 @@
         <span class="side-label">Obchod</span>
         <button class="admin-tab" data-page="products">🍯 Produkty <b id="productCountSide">0</b></button>
         <button class="admin-tab" data-page="orders">📦 Objednávky <b id="orderCountSide">0</b></button>
+        <button class="admin-tab" data-page="kanban">🗂️ Kanban objednávok</button>
         <button class="admin-tab" data-page="stock">📚 Sklad</button>
 
         <span class="side-label">Obsah</span>
@@ -199,6 +200,13 @@
           </article>
         </section>
 
+        <section class="admin-page" id="kanban">
+          <div class="admin-page-head"><div><span class="eyebrow">Spracovanie</span><h1>Kanban objednávok</h1>
+            <p>Presuň objednávku medzi stĺpcami alebo vyber stav na karte. Nezaplatené kartové objednávky zostanú uzamknuté.</p>
+          </div><button class="btn btn-secondary" type="button" data-jump="orders">Zoznam objednávok →</button></div>
+          <div id="ordersKanbanBoard" class="orders-kanban-board" aria-live="polite"></div>
+          <p class="kanban-footnote">Zrušené objednávky sú v pôvodnom zozname objednávok.</p>
+        </section>
         <section class="admin-page" id="stock">
           <div class="admin-page-head">
             <div>
@@ -330,7 +338,10 @@
           <label>Balenie<input id="productWeight" value="950 g"></label>
           <label>URL obrázka (voliteľné)<input id="productImage" placeholder="https://..."></label>
         </div>
-        <label>Fotografia produktu (max. 5 MB)<input id="productPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+        <label>Hlavná fotografia produktu (max. 5 MB)<input id="productPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+        <label>Ďalšie fotografie produktu (max. 6, každá do 5 MB)
+          <input id="productGalleryPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+        <div id="productExistingPhotos" class="product-existing-photos"></div>
         <label>Popis<textarea id="productDescription" rows="4"></textarea></label>
         <div class="form-grid">
           <label>Poradie<input id="productOrder" type="number" min="0"></label>
@@ -355,5 +366,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="admin.js"></script>
+  <script src="admin-v72.js"></script>
 </body>
 </html>

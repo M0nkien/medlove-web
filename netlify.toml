@@ -30,6 +30,13 @@
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
+  for = "/sledovanie.html"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"
+    Referrer-Policy = "no-referrer"
+
+[[headers]]
   for = "/cancel.html"
   [headers.values]
     Cache-Control = "no-store"

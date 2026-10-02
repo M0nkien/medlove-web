@@ -14,13 +14,18 @@
   <h1>Ďakujeme za objednávku!</h1>
   <p id="paymentMessage" role="status" aria-live="polite">Overujeme platbu cez Stripe. Počkaj, prosím.</p>
   <p id="orderCode"></p>
+  <a class="btn btn-secondary hidden" id="successTrackLink" href="sledovanie.html" rel="noreferrer">Sledovať objednávku</a>
   <a class="btn btn-primary" href="index.html">Späť do obchodu</a>
  </main>
  <script src="config.js"></script>
  <script>
  (async function(){
   const params=new URLSearchParams(location.search);
-  const code=params.get('order');
+  const code=params.get('order'),token=params.get('token');
+  if(token&&/^[a-f0-9]{64}$/.test(token)){
+   const link=document.getElementById('successTrackLink');
+   link.href='sledovanie.html?token='+encodeURIComponent(token);link.classList.remove('hidden');
+  }
   const message=document.getElementById('paymentMessage');
   if(!code||!/^MED-[A-F0-9]{12}$/.test(code)){
    message.textContent='Chýba platné číslo objednávky. Kontaktuj nás, ak už platba prebehla.';

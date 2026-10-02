@@ -5,3 +5,4 @@ Disallow: /success.html
 Disallow: /cancel.html
 Disallow: /objednavka-prijata.html
 Sitemap: https://medlovekivon.netlify.app/sitemap.xml
+Disallow: /sledovanie.html

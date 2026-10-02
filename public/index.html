@@ -58,12 +58,12 @@
     <section class="hero">
       <div class="shell hero-grid">
         <div class="hero-copy">
-          <div class="micro-label">Rodinná včelia farma z Likavky</div>
+          <div class="micro-label">🐝 Medlove · Rodinná včelia farma · Likavka</div>
           <h1 id="heroTitle">Poctivý med priamo od včelára.</h1>
           <p id="heroText">Čerstvý slovenský med z rodinnej včelej farmy s dôrazom na prírodu, kvalitu a poctivosť.</p>
 
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#produkty">Vybrať med</a>
+            <a class="btn btn-primary hero-shop-button" href="#produkty">Vybrať med <span aria-hidden="true">→</span></a>
             <a class="btn btn-secondary" href="tel:+421908356858">Zavolať</a>
           </div>
 
@@ -224,6 +224,12 @@
     </section>
   </main>
 
+  <nav class="mobile-bottom-nav" aria-label="Rýchla mobilná navigácia">
+    <a href="#produkty" data-mobile-nav="produkty"><span aria-hidden="true">🍯</span>Med</a>
+    <a href="#galeria" data-mobile-nav="galeria"><span aria-hidden="true">📷</span>Galéria</a>
+    <a href="#kontakt" data-mobile-nav="kontakt"><span aria-hidden="true">📍</span>Kontakt</a>
+    <button type="button" id="mobileOpenCart"><span aria-hidden="true">🛒</span>Košík</button>
+  </nav>
   <footer>
     <div class="shell footer-grid">
       <div>
@@ -301,7 +307,9 @@
             <span id="modalProductWeight"></span>
           </div>
           <div class="availability" id="modalProductStock"></div>
+          <div id="modalThumbs" class="product-photo-thumbs" aria-label="Fotografie produktu"></div>
           <button class="btn btn-primary full" id="modalAddToCart">Pridať do košíka</button>
+          <button class="btn btn-secondary full hidden" type="button" id="modalRestockBtn">Upozorniť na naskladnenie</button>
         </div>
       </div>
     </div>
@@ -352,6 +360,20 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="restockModal" role="dialog" aria-modal="true" aria-labelledby="restockTitle">
+    <div class="modal-card" style="max-width:480px">
+      <button class="modal-close" type="button" data-close="restockModal" aria-label="Zavrieť">×</button>
+      <h2 id="restockTitle">Upozornenie na naskladnenie</h2>
+      <p id="restockProductName"></p>
+      <form id="restockForm">
+        <label>E-mail<input id="restockEmail" type="email" autocomplete="email" maxlength="254" required></label>
+        <label class="check-row"><input id="restockConsent" type="checkbox" required>
+          Súhlasím s použitím e-mailu výhradne na jednorazové upozornenie.</label>
+        <button class="btn btn-primary full" type="submit">Prihlásiť sa na upozornenie</button>
+      </form>
+      <p class="form-note">Oznámenie sa odošle iba pri aktívnej e-mailovej službe.</p>
+    </div>
+  </div>
   <div class="modal hidden" id="galleryLightbox" role="dialog" aria-modal="true" aria-label="Fotografia farmy">
     <div class="modal-card gallery-lightbox"><button id="closeGalleryLightbox" class="modal-close" type="button" aria-label="Zavrieť fotografiu">×</button>
       <img id="lightboxPhoto" alt=""><p id="lightboxCaption"></p></div>
@@ -361,5 +383,6 @@
   <script src="config.js"></script>
   <script src="script.js"></script>
   <script src="gallery.js"></script>
+  <script src="storefront-v72.js"></script>
 </body>
 </html>
