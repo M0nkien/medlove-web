@@ -344,3 +344,51 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .gallery-edit-form button{align-self:stretch}
 .visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:760px){.notification-toolbar{align-items:stretch}.notification-toolbar select{width:100%}.gallery-toolbar{align-items:center}.admin-gallery-actions .btn{flex:1}}
+
+/* Medlove V7.2: Kanban, mobilné ovládanie, súkromné sledovanie a galéria produktov. */
+.hero-shop-button{font-size:1.04rem;padding:16px 24px;box-shadow:0 14px 30px #9b6a1655}
+.hero-shop-button span{font-size:1.3rem}.hero-copy .micro-label{border:1px solid #b9884155;padding:8px 13px;border-radius:999px}
+.photo-hero img{transition:transform .35s}.photo-hero:hover img{transform:scale(1.016)}
+.mobile-bottom-nav{display:none}
+.product-photo-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.product-photo-thumbs button{width:62px;height:62px;border:2px solid var(--line);border-radius:12px;background:var(--paper);padding:3px;overflow:hidden}
+.product-photo-thumbs button.active{border-color:var(--honey2)}.product-photo-thumbs img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.orders-kanban-board{display:grid;grid-template-columns:repeat(4,minmax(210px,1fr));gap:14px;align-items:start}
+.kanban-column{border:1px solid var(--line);border-radius:18px;background:var(--cream);padding:11px;min-height:190px}
+.kanban-column.kanban-over{outline:3px dashed var(--honey);outline-offset:2px}
+.kanban-header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:900;padding:8px 5px 13px}
+.kanban-header span{font-size:.8rem;border-radius:999px;background:var(--paper);padding:4px 8px;color:var(--muted)}
+.kanban-cards{display:flex;flex-direction:column;gap:10px}
+.kanban-card{background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:14px;border-radius:13px;box-shadow:0 4px 18px #0001}
+.kanban-card[draggable="true"]{cursor:grab}.kanban-card[aria-disabled="true"]{opacity:.68}
+.kanban-card strong,.kanban-card small{display:block;overflow-wrap:anywhere}.kanban-card small{color:var(--muted);margin:5px 0}
+.kanban-card .kanban-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.kanban-actions select{max-width:100%;min-width:0;flex:1;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);padding:8px}
+.kanban-actions button{padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--cream);color:var(--ink)}
+.kanban-empty{color:var(--muted);padding:12px 4px;font-size:.83rem}.kanban-footnote{color:var(--muted);font-size:.82rem}
+.order-history{margin-top:18px}.order-history-list{list-style:none;padding:0;border-left:2px solid var(--line);margin-left:9px}
+.order-history-list li{position:relative;padding:3px 0 16px 20px}.order-history-list li::before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;left:-6px;top:9px;background:var(--honey)}
+.order-history-list strong,.order-history-list small{display:block}.order-history-list small{color:var(--muted);margin-top:4px}
+.product-existing-photos{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.product-existing-photos figure{margin:0;width:108px;padding:6px;border:1px solid var(--line);border-radius:12px}
+.product-existing-photos img{width:100%;height:78px;object-fit:cover;border-radius:8px}
+.product-existing-photos button{width:100%;border:0;background:var(--cream);color:var(--ink);border-radius:8px;padding:6px;font-size:.75rem}
+.tracking-page{max-width:780px}.tracking-page h1{font-size:clamp(2rem,5vw,3.5rem)}
+.tracking-timeline{list-style:none;margin:24px 0 30px;padding:0 0 0 15px;border-left:3px solid var(--honey)}
+.tracking-timeline li{padding:6px 0 20px 20px;position:relative}
+.tracking-timeline li::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--honey);position:absolute;left:-22px;top:10px}
+.tracking-timeline strong,.tracking-timeline small{display:block}.tracking-timeline small{color:var(--muted);margin-top:4px}
+.tracking-disclaimer{font-size:.81rem;color:var(--muted);line-height:1.6;margin-top:25px}
+.cart-btn.cart-bump span{animation:cart-bump .33s ease-out}
+@keyframes cart-bump{0%{transform:scale(.8)}55%{transform:scale(1.3)}100%{transform:scale(1)}}
+@media(max-width:1150px){.orders-kanban-board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ body:not(.admin-body){padding-bottom:70px}
+ .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:48;justify-content:space-around;align-items:stretch;background:var(--paper);border-top:1px solid var(--line);padding:5px 4px max(5px,env(safe-area-inset-bottom))}
+ .mobile-bottom-nav a,.mobile-bottom-nav button{flex:1;display:flex;align-items:center;flex-direction:column;gap:2px;color:var(--muted);background:none;border:0;font-size:.7rem;padding:4px 2px;font-weight:750}
+ .mobile-bottom-nav span{font-size:1.2rem}.mobile-bottom-nav .active{color:var(--honey2)}
+ .toast{bottom:88px}.hero{padding:42px 0 54px}.hero-grid{min-height:0}
+ .hero-shop-button{width:100%}.hero-actions .btn-secondary{flex:1}
+ .orders-kanban-board{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.cart-btn.cart-bump span{animation:none}.photo-hero img{transition:none}}
