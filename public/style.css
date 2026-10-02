@@ -323,3 +323,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  .farm-gallery,.admin-gallery-grid{grid-template-columns:1fr}.admin-actions{align-items:center}
  .notification-preview{margin-top:14px}.admin-main{padding:15px}
 }
+
+/* V7: kompaktné, stále viditeľné mobilné ovládanie vzhľadu a admin hlavičky. */
+@media(max-width:760px){
+ .theme-toggle::before{content:"◐";font-size:1.1rem}
+ .admin-header{padding:0 12px}
+ .admin-actions{gap:5px}
+ .admin-actions .btn{padding:9px 10px}
+ .admin-brand small{display:none}
+}
