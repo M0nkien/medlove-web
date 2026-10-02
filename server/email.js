@@ -68,6 +68,10 @@ function createNotifier(db,env=process.env){
    text:'Objednávka: '+order.order_code+'\nMeno: '+order.customer_name+'\nTelefón: '+order.phone+'\nE-mail: '+(order.email||'neuvedený')+'\n'+detailText+'\nSpolu: '+eur(order.total)+'\nDoručenie: '+delivery+'\nAdresa: '+(order.delivery_address||'osobný odber')+'\nPlatba: '+payment+'\nPoznámka: '+(order.note||'—'),
    html:'<h2>Nová objednávka '+escapeHtml(order.order_code)+'</h2><p>Meno: '+escapeHtml(order.customer_name)+'<br>Telefón: '+escapeHtml(order.phone)+'<br>E-mail: '+escapeHtml(order.email||'neuvedený')+'</p><ul>'+detailHtml+'</ul><p><b>Spolu: '+escapeHtml(eur(order.total))+'</b><br>Doručenie: '+escapeHtml(delivery)+'<br>Adresa: '+escapeHtml(order.delivery_address||'osobný odber')+'<br>Platba: '+escapeHtml(payment)+'</p><p>Poznámka: '+escapeHtml(order.note||'—')+'</p>'});
   for(const item of destinations){
+   if(item.kind==='customer'&&privateLink){
+    item.text+='\n'+trackingText;
+    item.html+=trackingHtml;
+   }
    try{
     if(!await claim(order.id,item.kind))continue;
     const providerId=await post(item.to,item.subject,item.html,item.text,'medlove-'+order.id+'-'+item.kind);

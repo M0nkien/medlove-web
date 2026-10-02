@@ -399,3 +399,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 :root[data-theme="dark"] .stock.out{color:#ffaaa0}
 :root[data-theme="dark"] #mainNav a[aria-current="location"]{color:var(--honey2)}
 #mainNav a[aria-current="location"]{color:var(--honey2);text-decoration:underline;text-underline-offset:5px}
+
+/* Fix mobile bottom navigation: override global mobile nav's top:78px. */
+@media(max-width:760px){.mobile-bottom-nav{top:auto;min-height:60px}}

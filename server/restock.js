@@ -28,6 +28,14 @@ function createRestock(db,app,frontendUrl,env=process.env){
   if(!enabled||running)return;
   running=true;
   try{
+   // Store pending signups no longer than 180 days; successful notices for 30 days.
+   const olderThan180=new Date(Date.now()-180*24*60*60*1000).toISOString();
+   const olderThan30=new Date(Date.now()-30*24*60*60*1000).toISOString();
+   const expired=await db.from('restock_subscriptions').delete().lt('created_at',olderThan180);
+   if(expired.error)console.warn('Čistenie starých prihlásení:',expired.error.message);
+   const delivered=await db.from('restock_subscriptions').delete().not('notified_at','is',null)
+    .lt('notified_at',olderThan30);
+   if(delivered.error)console.warn('Čistenie doručených prihlásení:',delivered.error.message);
    const available=await db.from('products').select('id,name').eq('active',true).gt('stock',0);
    if(available.error)throw available.error;
    for(const product of available.data||[]){
